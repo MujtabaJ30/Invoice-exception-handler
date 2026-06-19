@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react';
+import { useState, useEffect, useRef, type FormEvent } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Queue,
@@ -95,6 +95,16 @@ export default function Dashboard({
   const recommendedProposal = proposals.length > 0
     ? proposals.reduce((best, p) => (p.confidence > best.confidence ? p : best), proposals[0])
     : null;
+
+  const proposalsEndRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (isProcessing || proposals.length > 0) {
+      requestAnimationFrame(() => {
+        proposalsEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      });
+    }
+  }, [isProcessing, proposals.length]);
 
   return (
     <div className="min-h-screen bg-surface text-foreground">
@@ -210,14 +220,17 @@ export default function Dashboard({
                       />
 
                       {currentException && (
-                        <ExceptionPanel
-                          exception={currentException}
-                          hasLearnedRule={hasLearnedRule}
-                          skippedRuleId={skippedRuleId}
-                          onGenerateProposals={onGenerateProposals}
-                          onReapplyLearnedRule={onReapplyLearnedRule}
-                          isProcessing={isProcessing}
-                        />
+                        <>
+                          <ExceptionPanel
+                            exception={currentException}
+                            hasLearnedRule={hasLearnedRule}
+                            skippedRuleId={skippedRuleId}
+                            onGenerateProposals={onGenerateProposals}
+                            onReapplyLearnedRule={onReapplyLearnedRule}
+                            isProcessing={isProcessing}
+                          />
+                          <div ref={proposalsEndRef} />
+                        </>
                       )}
 
                       {!currentException && !isProcessing && proposals.length === 0 && (
@@ -235,7 +248,7 @@ export default function Dashboard({
                       )}
 
                       {!isProcessing && proposals.length > 0 && (
-                        <div className="space-y-3 animate-slide-up">
+                        <div ref={proposalsEndRef} className="space-y-3 animate-slide-up">
                           <div className="flex items-center gap-2">
                             <Sparkle size={16} className="text-primary" />
                             <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">

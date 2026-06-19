@@ -341,8 +341,16 @@ export default function App() {
   }, []);
 
   const handleReapplyLearnedRule = useCallback(() => {
-    setState((prev) => ({ ...prev, skippedLearnedRuleIds: new Set() }));
-  }, []);
+    const { currentException } = stateRef.current;
+    if (!currentException || !learnedRuleForCurrent) return;
+
+    const learnedProposal = buildLearnedProposal(learnedRuleForCurrent, currentException.id);
+    setState((prev) => ({
+      ...prev,
+      skippedLearnedRuleIds: new Set(),
+      proposals: [learnedProposal],
+    }));
+  }, [learnedRuleForCurrent]);
 
   const handleCustomFix = useCallback(async (description: string) => {
     const { currentException, currentInvoice, companyId } = stateRef.current;
