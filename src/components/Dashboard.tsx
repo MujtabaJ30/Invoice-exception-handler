@@ -122,6 +122,7 @@ export default function Dashboard({
               <InvoiceList
                 invoices={invoices}
                 exceptions={exceptions}
+                reviewedExceptionIds={reviewedExceptionIds}
                 currentInvoice={currentInvoice}
                 onSelectInvoice={onSelectInvoice}
               />
