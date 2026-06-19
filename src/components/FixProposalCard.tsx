@@ -1,69 +1,64 @@
-import type { FixProposal } from '../types';
+import { Check, X, Lightning } from '@phosphor-icons/react';
+import type { FixProposal } from '../types/index.ts';
 
 interface FixProposalCardProps {
   readonly proposal: FixProposal;
-  readonly onApprove: () => void;
-  readonly onReject: () => void;
+  readonly isRecommended?: boolean;
+  readonly onUse: () => void;
+  readonly onSkip: () => void;
 }
 
 export default function FixProposalCard({
   proposal,
-  onApprove,
-  onReject,
+  isRecommended = false,
+  onUse,
+  onSkip,
 }: FixProposalCardProps) {
   const confidencePercent = Math.round(proposal.confidence * 100);
   const confidenceColor = getConfidenceColor(proposal.confidence);
   const isLearned = proposal.id.startsWith('learned_');
 
   return (
-    <div className="bg-card rounded-xl border border-border overflow-hidden animate-slide-up">
+    <div
+      className={`bg-card rounded-xl border overflow-hidden transition-all duration-200 hover:border-primary/40 ${
+        isRecommended ? 'border-primary/60 shadow-sm' : 'border-border shadow-sm'
+      }`}
+    >
       <div className="px-5 py-4">
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-2">
-            {isLearned ? (
-              <span className="px-2 py-0.5 bg-success/10 text-success text-[11px] font-medium rounded border border-success/20">
-                Learned
+        <div className="flex items-start justify-between gap-3 mb-3">
+          <div className="flex items-center gap-2 flex-wrap">
+            {isRecommended && (
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-primary/10 text-primary text-[11px] font-medium rounded-full border border-primary/20">
+                <Check size={11} weight="bold" />
+                Recommended
               </span>
-            ) : null}
-            <span className="text-xs text-muted-foreground">
+            )}
+            {isLearned && (
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-success/10 text-success text-[11px] font-medium rounded-full border border-success/20">
+                <Lightning size={11} weight="fill" />
+                Learned fix
+              </span>
+            )}
+            <span className="text-xs text-muted-foreground capitalize">
               {proposal.action.type === 'escalate' ? 'Escalation' : 'Resolution'}
             </span>
           </div>
-          <div
-            className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0"
-            style={{
-              backgroundColor: confidenceColor + '1A',
-              color: confidenceColor,
-            }}
-          >
-            {confidencePercent}
-          </div>
+          <span className="text-sm font-semibold font-mono tabular-nums" style={{ color: confidenceColor }}>
+            {confidencePercent}%
+          </span>
         </div>
 
-        <p className="text-sm text-foreground leading-relaxed mb-3">
+        <p className="text-sm text-foreground font-medium leading-relaxed mb-1">
           {proposal.description}
         </p>
-
-        <div className="bg-surface rounded-lg p-3 mb-4">
-          <p className="text-xs text-muted-foreground leading-relaxed">
-            <span className="font-medium text-foreground">Reasoning:</span>{' '}
-            {proposal.reasoning}
-          </p>
-        </div>
+        <p className="text-xs text-muted-foreground leading-relaxed mb-4">
+          {proposal.reasoning}
+        </p>
 
         <div className="mb-4">
-          <div className="flex items-center justify-between mb-1.5">
-            <span className="text-xs text-muted-foreground">Confidence</span>
-            <span
-              className="text-xs font-semibold"
-              style={{ color: confidenceColor }}
-            >
-              {confidencePercent}%
-            </span>
-          </div>
-          <div className="w-full bg-surface rounded-full h-1.5">
+          <div className="w-full bg-surface rounded-full h-2 overflow-hidden">
             <div
-              className="h-1.5 rounded-full transition-all duration-500"
+              className="h-full rounded-full transition-all duration-700 ease-out"
               style={{
                 width: `${confidencePercent}%`,
                 backgroundColor: confidenceColor,
@@ -74,16 +69,18 @@ export default function FixProposalCard({
 
         <div className="flex gap-2">
           <button
-            onClick={onApprove}
-            className="flex-1 bg-success/10 hover:bg-success/20 text-success font-medium py-2 px-4 rounded-lg transition-colors text-sm border border-success/20"
+            onClick={onUse}
+            className="flex-1 inline-flex items-center justify-center gap-1.5 bg-primary hover:bg-primary/90 text-primary-foreground font-medium py-2 px-4 rounded-lg transition-colors text-sm active:scale-[0.98]"
           >
-            Approve
+            <Check size={14} weight="bold" />
+            Use this fix
           </button>
           <button
-            onClick={onReject}
-            className="flex-1 bg-danger/10 hover:bg-danger/20 text-danger font-medium py-2 px-4 rounded-lg transition-colors text-sm border border-danger/20"
+            onClick={onSkip}
+            className="flex-1 inline-flex items-center justify-center gap-1.5 bg-surface hover:bg-accent text-foreground font-medium py-2 px-4 rounded-lg transition-colors text-sm border border-border active:scale-[0.98]"
           >
-            Reject
+            <X size={14} weight="bold" />
+            Skip
           </button>
         </div>
       </div>

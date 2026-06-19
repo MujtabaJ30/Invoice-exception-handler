@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { fetchMetrics } from '../lib/api';
+import { fetchMetrics } from '../lib/api.ts';
 import type { MetricsSnapshot } from '../lib/db/index.ts';
 
 interface MetricsDashboardProps {
@@ -32,11 +32,7 @@ export default function MetricsDashboard({ companyId }: MetricsDashboardProps) {
   }, [companyId]);
 
   if (loading) {
-    return (
-      <div className="bg-card rounded-xl border border-border p-16 text-center">
-        <p className="text-muted-foreground text-sm">Loading metrics...</p>
-      </div>
-    );
+    return <MetricsSkeleton />;
   }
 
   if (error || !metrics) {
@@ -57,7 +53,7 @@ export default function MetricsDashboard({ companyId }: MetricsDashboardProps) {
         <MetricCard
           label="Touchless rate"
           value={`${touchlessRatePct}%`}
-          subtext="Exceptions resolved without human review"
+          subtext="Exceptions resolved without a person"
           color="success"
         />
         <MetricCard
@@ -67,46 +63,65 @@ export default function MetricsDashboard({ companyId }: MetricsDashboardProps) {
           color="primary"
         />
         <MetricCard
-          label="Exceptions resolved"
+          label="Exceptions handled"
           value={String(metrics.resolvedExceptions)}
           subtext={`${metrics.pendingExceptions} still pending`}
           color="warning"
         />
         <MetricCard
-          label="Learned rules"
+          label="Rules learned"
           value={String(metrics.learnedRulesCount)}
-          subtext="Patterns saved from past decisions"
+          subtext="Patterns saved from decisions"
           color="foreground"
         />
       </div>
 
-      <div className="bg-card rounded-xl border border-border p-6">
-        <h3 className="text-sm font-semibold text-foreground mb-4">ROI estimate</h3>
+      <div className="bg-card rounded-xl border border-border p-6 shadow-sm">
+        <h3 className="text-sm font-semibold text-foreground mb-4">Impact estimate</h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div>
-            <p className="text-xs text-muted-foreground uppercase tracking-wider">Invoices processed</p>
-            <p className="text-2xl font-bold font-mono text-foreground mt-1">{metrics.totalInvoices}</p>
+            <p className="text-xs text-muted-foreground uppercase tracking-wide">Invoices processed</p>
+            <p className="text-2xl font-bold font-mono text-foreground mt-1 tabular-nums">
+              {metrics.totalInvoices}
+            </p>
           </div>
           <div>
-            <p className="text-xs text-muted-foreground uppercase tracking-wider">Total exceptions</p>
-            <p className="text-2xl font-bold font-mono text-foreground mt-1">{metrics.totalExceptions}</p>
+            <p className="text-xs text-muted-foreground uppercase tracking-wide">Total exceptions</p>
+            <p className="text-2xl font-bold font-mono text-foreground mt-1 tabular-nums">
+              {metrics.totalExceptions}
+            </p>
           </div>
           <div>
-            <p className="text-xs text-muted-foreground uppercase tracking-wider">Savings per invoice</p>
-            <p className="text-2xl font-bold font-mono text-success mt-1">${potentialSavings.toFixed(2)}</p>
+            <p className="text-xs text-muted-foreground uppercase tracking-wide">Savings per invoice</p>
+            <p className="text-2xl font-bold font-mono text-success mt-1 tabular-nums">
+              ${potentialSavings.toFixed(2)}
+            </p>
           </div>
         </div>
       </div>
 
       <div className="bg-surface rounded-xl border border-border p-6">
-        <h3 className="text-sm font-semibold text-foreground mb-2">What these numbers mean</h3>
+        <h3 className="text-sm font-semibold text-foreground mb-2">How we calculate impact</h3>
         <p className="text-sm text-muted-foreground leading-relaxed">
-          Zamp's target for enterprise AP is a 70-90% touchless rate. The baseline manual cost
-          is roughly $13-23 per invoice. Every learned rule here is one less decision for a
-          person to make later. Every auto-resolved exception is one less interruption for the
-          finance team.
+          Zamp's target for enterprise AP is a 70-90% touchless rate. The baseline manual cost is
+          roughly $13-23 per invoice. Every learned rule here is one less decision for a person to
+          make later. Every auto-resolved exception is one less interruption for the finance team.
         </p>
       </div>
+    </div>
+  );
+}
+
+function MetricsSkeleton() {
+  return (
+    <div className="space-y-6 animate-pulse">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <div key={i} className="bg-card rounded-xl border border-border p-5 h-28" />
+        ))}
+      </div>
+      <div className="bg-card rounded-xl border border-border p-6 h-32" />
+      <div className="bg-surface rounded-xl border border-border p-6 h-24" />
     </div>
   );
 }
@@ -130,9 +145,9 @@ function MetricCard({
   };
 
   return (
-    <div className={`rounded-xl border p-5 ${colorClasses[color]}`}>
-      <p className="text-xs opacity-80 uppercase tracking-wider font-medium">{label}</p>
-      <p className="text-3xl font-bold font-mono mt-2">{value}</p>
+    <div className={`rounded-xl border p-5 shadow-sm ${colorClasses[color]}`}>
+      <p className="text-xs opacity-80 uppercase tracking-wide font-medium">{label}</p>
+      <p className="text-3xl font-bold font-mono mt-2 tabular-nums">{value}</p>
       <p className="text-xs opacity-70 mt-1">{subtext}</p>
     </div>
   );

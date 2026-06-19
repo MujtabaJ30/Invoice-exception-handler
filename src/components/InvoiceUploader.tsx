@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
-import { ingestInvoices } from '../lib/api';
+import { UploadSimple, FileJs, Spinner } from '@phosphor-icons/react';
+import { ingestInvoices } from '../lib/api.ts';
 import type { Invoice, Exception } from '../types/index.ts';
 
 interface InvoiceUploaderProps {
@@ -49,8 +50,11 @@ export default function InvoiceUploader({ companyId, onUpload }: InvoiceUploader
   );
 
   return (
-    <div className="bg-card rounded-xl border border-border p-4">
-      <h3 className="text-sm font-semibold text-foreground mb-2">Ingest invoices</h3>
+    <div className="bg-card rounded-xl border border-border p-4 shadow-sm">
+      <h3 className="text-sm font-semibold text-foreground mb-2 flex items-center gap-1.5">
+        <UploadSimple size={14} />
+        Ingest invoices
+      </h3>
       <div
         onDragOver={(e) => {
           e.preventDefault();
@@ -58,7 +62,7 @@ export default function InvoiceUploader({ companyId, onUpload }: InvoiceUploader
         }}
         onDragLeave={() => setIsDragging(false)}
         onDrop={handleDrop}
-        className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors ${
+        className={`border-2 border-dashed rounded-lg p-5 text-center transition-colors ${
           isDragging ? 'border-primary bg-primary/5' : 'border-border hover:border-muted-foreground'
         }`}
       >
@@ -72,20 +76,24 @@ export default function InvoiceUploader({ companyId, onUpload }: InvoiceUploader
         />
         <label
           htmlFor="invoice-upload"
-          className="cursor-pointer text-sm text-muted-foreground"
+          className="cursor-pointer text-sm text-muted-foreground flex flex-col items-center gap-2"
         >
           {isLoading ? (
-            <span>Processing files...</span>
+            <>
+              <Spinner size={22} className="animate-spin text-primary" />
+              <span>Processing files…</span>
+            </>
           ) : (
-            <span>
-              Drop JSON invoices here or <span className="text-primary">click to browse</span>
-            </span>
+            <>
+              <FileJs size={22} className="text-muted-foreground" />
+              <span>
+                Drop JSON invoices here or <span className="text-primary">click to browse</span>
+              </span>
+            </>
           )}
         </label>
       </div>
-      {error && (
-        <p className="text-xs text-danger mt-2">{error}</p>
-      )}
+      {error && <p className="text-xs text-danger mt-2">{error}</p>}
     </div>
   );
 }

@@ -1,21 +1,22 @@
-import type { Review, Exception } from '../types';
-import { getExceptionTypeLabel, getSeverityColor } from '../lib/exceptions';
+import { Check, X, PencilSimple, Brain, Clock } from '@phosphor-icons/react';
+import type { Review, Exception } from '../types/index.ts';
+import { getExceptionTypeLabel } from '../lib/exceptions.ts';
+import SeverityIcon from './SeverityIcon.tsx';
 
 interface ReviewSummaryProps {
   readonly reviews: Review[];
   readonly exceptions: Exception[];
 }
 
-export default function ReviewSummary({
-  reviews,
-  exceptions,
-}: ReviewSummaryProps) {
+export default function ReviewSummary({ reviews, exceptions }: ReviewSummaryProps) {
   if (reviews.length === 0) {
     return (
-      <div className="bg-card rounded-xl border border-border p-16 text-center">
-        <p className="text-muted-foreground">No reviews yet</p>
-        <p className="text-muted-foreground text-sm mt-1">
-          Review exceptions to see them here
+      <div className="bg-card rounded-xl border border-border p-16 text-center shadow-sm">
+        <Brain size={40} className="text-muted-foreground mx-auto mb-4" weight="duotone" />
+        <p className="text-sm font-medium text-foreground">No decisions yet</p>
+        <p className="text-sm text-muted-foreground mt-1 max-w-sm mx-auto">
+          Approve, skip, or correct a fix and it will show up here. Your decisions train the
+          engine.
         </p>
       </div>
     );
@@ -33,51 +34,36 @@ export default function ReviewSummary({
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <div className="grid grid-cols-4 gap-4">
-        <StatCard label="Approved" value={approvedCount} color="success" icon={'\u2713'} />
-        <StatCard label="Rejected" value={rejectedCount} color="danger" icon={'\u2717'} />
-        <StatCard label="Corrected" value={correctedCount} color="warning" icon={'\u270E'} />
-        <div className="bg-card rounded-xl border border-border p-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg flex items-center justify-center text-lg shrink-0 bg-primary/10 text-primary">
-              {'\uD83E\uDDE0'}
-            </div>
-            <div>
-              <p className="text-2xl font-bold font-mono text-foreground">{learnedCount}</p>
-              <p className="text-xs text-muted-foreground">Rules learned</p>
-            </div>
-          </div>
-        </div>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <StatCard label="Approved" value={approvedCount} color="success" icon={Check} />
+        <StatCard label="Corrected" value={correctedCount} color="warning" icon={PencilSimple} />
+        <StatCard label="Skipped" value={rejectedCount} color="danger" icon={X} />
+        <StatCard label="Rules learned" value={learnedCount} color="primary" icon={Brain} />
       </div>
 
       {learnedCount > 0 && (
-        <div className="bg-primary/5 border border-primary/10 rounded-lg p-4 text-center">
-          <p className="text-xs text-muted-foreground leading-relaxed">
-            <span className="text-primary font-medium">{learnedCount} rule{learnedCount !== 1 ? 's' : ''}</span> saved from your decisions.
-            Next time a similar exception appears, the system will apply the learned fix automatically.
-            Rules persist across page refreshes.
+        <div className="bg-success/5 border border-success/10 rounded-xl p-4 flex items-start gap-3">
+          <Brain size={20} className="text-success shrink-0 mt-0.5" weight="fill" />
+          <p className="text-sm text-muted-foreground leading-relaxed">
+            <span className="font-medium text-foreground">{learnedCount} rule{learnedCount !== 1 ? 's' : ''}</span>{' '}
+            saved from your decisions. Similar exceptions will now resolve automatically.
           </p>
         </div>
       )}
 
-      <div className="bg-card rounded-xl border border-border overflow-hidden">
+      <div className="bg-card rounded-xl border border-border overflow-hidden shadow-sm">
         <div className="px-6 py-4 border-b border-border">
-          <h2 className="text-sm font-semibold text-foreground">Review History</h2>
+          <h2 className="text-sm font-semibold text-foreground">Decision history</h2>
         </div>
         <div className="divide-y divide-border">
           {reviewsWithExceptions.map(({ review, exception }) => (
-            <div key={review.id} className="px-6 py-4 hover:bg-accent/30 transition-colors">
+            <div key={review.id} className="px-6 py-4 hover:bg-accent/20 transition-colors">
               <div className="flex items-center justify-between gap-4">
                 <div className="flex-1 min-w-0">
                   {exception ? (
                     <>
                       <div className="flex items-center gap-2">
-                        <span
-                          className="w-2 h-2 rounded-full shrink-0"
-                          style={{
-                            backgroundColor: getSeverityColor(exception.severity),
-                          }}
-                        />
+                        <SeverityIcon severity={exception.severity} size={16} />
                         <span className="text-sm font-medium text-foreground">
                           {getExceptionTypeLabel(exception.type)}
                         </span>
@@ -87,15 +73,13 @@ export default function ReviewSummary({
                       </p>
                     </>
                   ) : (
-                    <p className="text-sm text-muted-foreground">
-                      Exception details unavailable
-                    </p>
+                    <p className="text-sm text-muted-foreground">Exception details unavailable</p>
                   )}
                 </div>
                 <div className="text-right shrink-0">
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center justify-end gap-2">
                     {(review.status === 'approved' || review.status === 'corrected') && (
-                      <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-primary/10 text-primary">
+                      <span className="px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-success/10 text-success border border-success/20">
                         Learned
                       </span>
                     )}
@@ -106,6 +90,10 @@ export default function ReviewSummary({
                       {review.decision.description}
                     </p>
                   ) : null}
+                  <p className="text-[11px] text-muted-foreground mt-1 flex items-center justify-end gap-1">
+                    <Clock size={10} />
+                    <span className="tabular-nums">{new Date(review.reviewedAt).toLocaleString()}</span>
+                  </p>
                 </div>
               </div>
             </div>
@@ -120,29 +108,30 @@ function StatCard({
   label,
   value,
   color,
-  icon,
+  icon: Icon,
 }: {
   readonly label: string;
   readonly value: number;
-  readonly color: 'success' | 'danger' | 'warning';
-  readonly icon: string;
+  readonly color: 'success' | 'danger' | 'warning' | 'primary';
+  readonly icon: React.ElementType;
 }) {
-  const styles: Record<string, { bg: string; text: string }> = {
-    success: { bg: 'bg-success/10', text: 'text-success' },
-    danger: { bg: 'bg-danger/10', text: 'text-danger' },
-    warning: { bg: 'bg-warning/10', text: 'text-warning' },
+  const styles: Record<string, { bg: string; text: string; border: string }> = {
+    success: { bg: 'bg-success/10', text: 'text-success', border: 'border-success/20' },
+    danger: { bg: 'bg-danger/10', text: 'text-danger', border: 'border-danger/20' },
+    warning: { bg: 'bg-warning/10', text: 'text-warning', border: 'border-warning/20' },
+    primary: { bg: 'bg-primary/10', text: 'text-primary', border: 'border-primary/20' },
   };
 
-  const { bg, text } = styles[color];
+  const { bg, text, border } = styles[color];
 
   return (
-    <div className="bg-card rounded-xl border border-border p-4">
+    <div className={`bg-card rounded-xl border ${border} p-4 shadow-sm`}>
       <div className="flex items-center gap-3">
-        <div className={`w-10 h-10 rounded-lg flex items-center justify-center text-lg shrink-0 ${bg} ${text}`}>
-          {icon}
+        <div className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 ${bg} ${text}`}>
+          <Icon size={20} weight="fill" />
         </div>
         <div>
-          <p className="text-2xl font-bold font-mono text-foreground">{value}</p>
+          <p className="text-2xl font-bold font-mono text-foreground tabular-nums">{value}</p>
           <p className="text-xs text-muted-foreground">{label}</p>
         </div>
       </div>
@@ -152,21 +141,21 @@ function StatCard({
 
 function StatusBadge({ status }: { readonly status: Review['status'] }) {
   const classes: Record<Review['status'], string> = {
-    approved: 'bg-success/10 text-success',
-    rejected: 'bg-danger/10 text-danger',
-    corrected: 'bg-warning/10 text-warning',
-    pending: 'bg-muted text-muted-foreground',
+    approved: 'bg-success/10 text-success border-success/20',
+    rejected: 'bg-danger/10 text-danger border-danger/20',
+    corrected: 'bg-warning/10 text-warning border-warning/20',
+    pending: 'bg-muted text-muted-foreground border-border',
   };
 
   const labels: Record<Review['status'], string> = {
     approved: 'Approved',
-    rejected: 'Rejected',
+    rejected: 'Skipped',
     corrected: 'Corrected',
     pending: 'Pending',
   };
 
   return (
-    <span className={`px-2 py-0.5 rounded text-[11px] font-medium ${classes[status]}`}>
+    <span className={`px-2 py-0.5 rounded-full text-[11px] font-medium border ${classes[status]}`}>
       {labels[status]}
     </span>
   );
