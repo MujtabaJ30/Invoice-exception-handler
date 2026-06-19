@@ -5,23 +5,23 @@
   --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
   --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
 
-  /* Semantic color tokens — dark theme defaults */
-  --color-background: oklch(21% 0.025 264);
-  --color-foreground: oklch(97% 0.01 264);
+  /* Semantic color tokens — light mode defaults */
+  --color-background: oklch(97% 0.01 264);
+  --color-foreground: oklch(21% 0.025 264);
 
-  --color-primary: oklch(54% 0.2 264);
+  --color-primary: oklch(48% 0.2 264);
   --color-primary-foreground: oklch(97% 0.01 264);
 
-  --color-secondary: oklch(28% 0.025 264);
-  --color-secondary-foreground: oklch(97% 0.01 264);
+  --color-secondary: oklch(94% 0.01 264);
+  --color-secondary-foreground: oklch(21% 0.025 264);
 
-  --color-muted: oklch(28% 0.025 264);
-  --color-muted-foreground: oklch(65% 0.025 264);
+  --color-muted: oklch(94% 0.01 264);
+  --color-muted-foreground: oklch(46% 0.025 264);
 
-  --color-accent: oklch(28% 0.025 264);
-  --color-accent-foreground: oklch(97% 0.01 264);
+  --color-accent: oklch(94% 0.01 264);
+  --color-accent-foreground: oklch(21% 0.025 264);
 
-  --color-success: oklch(62% 0.18 160);
+  --color-success: oklch(52% 0.18 160);
   --color-success-foreground: oklch(97% 0.01 160);
 
   --color-warning: oklch(72% 0.15 80);
@@ -30,17 +30,17 @@
   --color-danger: oklch(52% 0.22 27);
   --color-danger-foreground: oklch(97% 0.01 27);
 
-  --color-border: oklch(28% 0.025 264);
-  --color-ring: oklch(54% 0.2 264);
-  --color-ring-offset: oklch(21% 0.025 264);
+  --color-border: oklch(88% 0.015 264);
+  --color-ring: oklch(48% 0.2 264);
+  --color-ring-offset: oklch(97% 0.01 264);
 
-  --color-card: oklch(24% 0.025 264);
-  --color-card-foreground: oklch(97% 0.01 264);
+  --color-card: oklch(100% 0 0);
+  --color-card-foreground: oklch(21% 0.025 264);
 
-  --color-surface: oklch(19% 0.025 264);
-  --color-surface-foreground: oklch(97% 0.01 264);
+  --color-surface: oklch(95% 0.01 264);
+  --color-surface-foreground: oklch(21% 0.025 264);
 
-  --color-surface-elevated: oklch(26% 0.025 264);
+  --color-surface-elevated: oklch(91% 0.015 264);
 
   /* Radius tokens */
   --radius-sm: 0.25rem;
@@ -75,39 +75,6 @@
   }
 }
 
-/* Light mode overrides */
-@custom-variant light (&:where(.light, .light *));
-
-.light {
-  --color-background: oklch(97% 0.01 264);
-  --color-foreground: oklch(21% 0.025 264);
-
-  --color-primary: oklch(48% 0.2 264);
-  --color-primary-foreground: oklch(97% 0.01 264);
-
-  --color-secondary: oklch(94% 0.01 264);
-  --color-secondary-foreground: oklch(21% 0.025 264);
-
-  --color-muted: oklch(94% 0.01 264);
-  --color-muted-foreground: oklch(46% 0.025 264);
-
-  --color-accent: oklch(94% 0.01 264);
-  --color-accent-foreground: oklch(21% 0.025 264);
-
-  --color-success: oklch(52% 0.18 160);
-  --color-border: oklch(88% 0.015 264);
-  --color-ring: oklch(48% 0.2 264);
-  --color-ring-offset: oklch(97% 0.01 264);
-
-  --color-card: oklch(100% 0 0);
-  --color-card-foreground: oklch(21% 0.025 264);
-
-  --color-surface: oklch(95% 0.01 264);
-  --color-surface-foreground: oklch(21% 0.025 264);
-
-  --color-surface-elevated: oklch(91% 0.015 264);
-}
-
 @layer base {
   * {
     border-color: var(--color-border);
@@ -125,5 +92,16 @@
     outline: 2px solid var(--color-ring);
     outline-offset: 2px;
     border-radius: var(--radius-sm);
+  }
+}
+
+/* Reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
   }
 }

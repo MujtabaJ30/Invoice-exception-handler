@@ -31,9 +31,11 @@ interface AppState {
   error: string | null;
   showOnboarding: boolean;
   skippedLearnedRuleIds: Set<string>;
+  lastLearnedRule: DbRule | null;
 }
 
 const COMPANY_ID_KEY = 'zamp_exception_engine_company_id';
+const LEARN_BANNER_DURATION_MS = 3000;
 
 const INITIAL_STATE: Omit<AppState, 'companyId'> = {
   invoices: [],
@@ -47,6 +49,7 @@ const INITIAL_STATE: Omit<AppState, 'companyId'> = {
   error: null,
   showOnboarding: true,
   skippedLearnedRuleIds: new Set(),
+  lastLearnedRule: null,
 };
 
 function getOrCreateCompanyId(): string {
@@ -158,6 +161,14 @@ export default function App() {
       cancelled = true;
     };
   }, [state.companyId]);
+
+  useEffect(() => {
+    if (!state.lastLearnedRule) return;
+    const timeoutId = setTimeout(() => {
+      setState((prev) => ({ ...prev, lastLearnedRule: null }));
+    }, LEARN_BANNER_DURATION_MS);
+    return () => clearTimeout(timeoutId);
+  }, [state.lastLearnedRule]);
 
   const learnedRuleForCurrent = state.currentException
     ? state.learnedRules.find(
@@ -290,6 +301,7 @@ export default function App() {
           ...prev.learnedRules.filter((r) => r.id !== newRule.id),
           newRule,
         ],
+        lastLearnedRule: newRule,
       };
     });
   }, [moveToNextException]);
@@ -381,6 +393,7 @@ export default function App() {
           ...prev.learnedRules.filter((r) => r.id !== newRule.id),
           newRule,
         ],
+        lastLearnedRule: newRule,
       };
     });
   }, [moveToNextException]);
@@ -420,6 +433,7 @@ export default function App() {
       showOnboarding={state.showOnboarding}
       hasLearnedRule={hasLearnedRule}
       skippedRuleId={skippedRuleId}
+      lastLearnedRule={state.lastLearnedRule}
       onSelectInvoice={handleSelectInvoice}
       onGenerateProposals={handleGenerateProposals}
       onReapplyLearnedRule={handleReapplyLearnedRule}

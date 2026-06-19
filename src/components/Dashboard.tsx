@@ -35,6 +35,7 @@ interface DashboardProps {
   readonly showOnboarding: boolean;
   readonly hasLearnedRule: boolean;
   readonly skippedRuleId: string | null;
+  readonly lastLearnedRule: { exceptionType: string; pattern: string; resolution: string } | null;
   readonly onSelectInvoice: (invoice: Invoice) => void;
   readonly onGenerateProposals: () => void;
   readonly onReapplyLearnedRule: () => void;
@@ -69,6 +70,7 @@ export default function Dashboard({
   showOnboarding,
   hasLearnedRule,
   skippedRuleId,
+  lastLearnedRule,
   onSelectInvoice,
   onGenerateProposals,
   onReapplyLearnedRule,
@@ -182,6 +184,24 @@ export default function Dashboard({
                   {currentInvoice ? (
                     <>
                       <StageIndicator stages={STAGES} activeStage={activeStage} />
+
+                      {lastLearnedRule && (
+                        <motion.div
+                          initial={{ opacity: 0, y: -8 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -8 }}
+                          className="bg-success/10 border border-success/20 rounded-xl p-4 flex items-start gap-3"
+                        >
+                          <CheckCircle size={20} className="text-success shrink-0 mt-0.5" weight="fill" />
+                          <div>
+                            <p className="text-sm font-medium text-foreground">Rule learned</p>
+                            <p className="text-xs text-muted-foreground leading-relaxed mt-0.5">
+                              This fix was saved. Next time a similar exception appears, it will
+                              resolve automatically.
+                            </p>
+                          </div>
+                        </motion.div>
+                      )}
 
                       <InvoiceDetail
                         invoice={currentInvoice}
