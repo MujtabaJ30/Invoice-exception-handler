@@ -19,6 +19,8 @@
 - Fixed `InvoiceUploader` ingestion flow so uploaded exceptions are returned to the frontend and displayed.
 - Smoke-tested the full backend flow locally: ingestion, detection, review creation, rule creation, metrics, and fallback proposal generation.
 - Added `.agents/`, `.claude/`, `.continue/`, and `dev-server.log` to `.gitignore`.
+- Full frontend redesign: guided workflow with stage indicator, Phosphor icons, bento-style How It Works, redesigned cards, light mode by default, reduced-motion support, Learn confirmation banner.
+- Fixed InvoiceList to show pending counts and resolved status.
 - Build, tests, and TypeScript checks pass.
 
 ### What still needs to happen
