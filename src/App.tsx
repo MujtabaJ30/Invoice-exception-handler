@@ -478,8 +478,9 @@ export default function App() {
 
   if (state.invoices.length === 0) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-surface">
+      <div className="flex flex-col items-center justify-center min-h-screen bg-surface gap-4">
         <LoadingSpinner size="lg" />
+        <p className="text-sm text-muted-foreground">Loading…</p>
       </div>
     );
   }
