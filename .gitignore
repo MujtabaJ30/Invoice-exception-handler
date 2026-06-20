@@ -47,3 +47,9 @@ dev-server.log
 .agents/
 .claude/
 .continue/
+
+# Internal dev docs (not for recruiter view)
+docs/context.md
+docs/decisions.md
+docs/plan.md
+docs/redesign-brief.md
