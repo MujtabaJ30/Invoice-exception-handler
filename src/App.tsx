@@ -189,18 +189,30 @@ export default function App() {
 
   const handleSelectInvoice = useCallback((invoice: Invoice) => {
     setState((prev) => {
+      const reviewedIds = new Set(prev.reviews.map((r) => r.exceptionId));
       const invoiceExceptions = prev.exceptions.filter(
         (e) => e.invoiceId === invoice.id
       );
+      const firstUnresolved = invoiceExceptions.find((e) => !reviewedIds.has(e.id)) || null;
       return {
         ...prev,
         currentInvoice: invoice,
-        currentException: invoiceExceptions[0] || null,
+        currentException: firstUnresolved,
         proposals: [],
         error: null,
         skippedLearnedRuleIds: new Set(),
       };
     });
+  }, []);
+
+  const handleSelectException = useCallback((exception: Exception) => {
+    setState((prev) => ({
+      ...prev,
+      currentException: exception,
+      proposals: [],
+      error: null,
+      skippedLearnedRuleIds: new Set(),
+    }));
   }, []);
 
   const handleGenerateProposals = useCallback(async () => {
@@ -447,6 +459,7 @@ export default function App() {
       skippedRuleId={skippedRuleId}
       lastLearnedRule={state.lastLearnedRule}
       onSelectInvoice={handleSelectInvoice}
+      onSelectException={handleSelectException}
       onGenerateProposals={handleGenerateProposals}
       onReapplyLearnedRule={handleReapplyLearnedRule}
       onApproveFix={handleApproveFix}

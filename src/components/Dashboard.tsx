@@ -38,6 +38,7 @@ interface DashboardProps {
   readonly skippedRuleId: string | null;
   readonly lastLearnedRule: { exceptionType: string; pattern: string; resolution: string } | null;
   readonly onSelectInvoice: (invoice: Invoice) => void;
+  readonly onSelectException: (exception: Exception) => void;
   readonly onGenerateProposals: () => void;
   readonly onReapplyLearnedRule: () => void;
   readonly onApproveFix: (proposal: FixProposal) => Promise<void>;
@@ -73,6 +74,7 @@ export default function Dashboard({
   skippedRuleId,
   lastLearnedRule,
   onSelectInvoice,
+  onSelectException,
   onGenerateProposals,
   onReapplyLearnedRule,
   onApproveFix,
@@ -112,10 +114,37 @@ export default function Dashboard({
     : null;
 
   const proposalsEndRef = useRef<HTMLDivElement>(null);
+  const [elapsedTime, setElapsedTime] = useState(0);
 
   useEffect(() => {
-    if (proposals.length > 0) {
-      proposalsEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    if (!isProcessing) {
+      setElapsedTime(0);
+      return;
+    }
+    const interval = setInterval(() => setElapsedTime((t) => t + 1), 1000);
+    return () => clearInterval(interval);
+  }, [isProcessing]);
+
+  useEffect(() => {
+    if (proposals.length > 0 && proposalsEndRef.current) {
+      const el = proposalsEndRef.current;
+      const timer = setTimeout(() => {
+        const startY = window.scrollY;
+        const targetY = el.getBoundingClientRect().top + startY - 96;
+        const distance = targetY - startY;
+        if (Math.abs(distance) < 20) return;
+        const duration = 500;
+        const startTime = performance.now();
+        function step(now: number) {
+          const elapsed = now - startTime;
+          const progress = Math.min(elapsed / duration, 1);
+          const eased = 1 - Math.pow(1 - progress, 3);
+          window.scrollTo(0, startY + distance * eased);
+          if (progress < 1) requestAnimationFrame(step);
+        }
+        requestAnimationFrame(step);
+      }, 200);
+      return () => clearTimeout(timer);
     }
   }, [proposals.length]);
 
@@ -181,7 +210,7 @@ export default function Dashboard({
         </div>
 
         <div aria-live="polite" className="sr-only">
-          {isProcessing ? 'Generating fix proposals' : ''}
+          {isProcessing ? 'Generating proposals…' : ''}
         </div>
 
         <AnimatePresence mode="wait">
@@ -232,6 +261,8 @@ export default function Dashboard({
                         invoice={currentInvoice}
                         exceptions={invoiceExceptions}
                         reviewedExceptionIds={reviewedExceptionIds}
+                        currentException={currentException}
+                        onSelectException={onSelectException}
                       />
 
                       {currentException && (
@@ -243,35 +274,14 @@ export default function Dashboard({
                             onGenerateProposals={onGenerateProposals}
                             onReapplyLearnedRule={onReapplyLearnedRule}
                             isProcessing={isProcessing}
+                            elapsedTime={elapsedTime}
                           />
                           <div ref={proposalsEndRef}>
-                            {isProcessing && (
-                              <div className="space-y-3 mt-4 animate-fade-in">
-                                <div className="flex items-center gap-2">
-                                  <div className="w-4 h-4 rounded-full bg-surface animate-pulse" />
-                                  <div className="h-3 bg-surface rounded w-32 animate-pulse" />
-                                </div>
-                                {[1, 2, 3].map((i) => (
-                                  <div key={i} className="bg-card rounded-xl border border-border p-5 shadow-sm animate-pulse">
-                                    <div className="h-4 bg-surface rounded w-2/3 mb-3" />
-                                    <div className="h-3 bg-surface rounded w-full mb-2" />
-                                    <div className="h-3 bg-surface rounded w-5/6 mb-4" />
-                                    <div className="h-2 bg-surface rounded-full w-full mb-4" />
-                                    <div className="flex gap-2">
-                                      <div className="flex-1 h-9 bg-surface rounded-lg" />
-                                      <div className="flex-1 h-9 bg-surface rounded-lg" />
-                                    </div>
-                                  </div>
-                                ))}
-                              </div>
-                            )}
                             {!isProcessing && proposals.length > 0 && (
-                              <div className="space-y-3 animate-slide-up mt-4">
-                                <div className="flex items-center gap-2">
-                                  <Sparkle size={16} className="text-primary" />
-                                  <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                                    Proposed fixes
-                                  </h3>
+                              <div className="space-y-3 mt-6">
+                                <div className="flex items-center gap-3 mb-5">
+                                  <Sparkle size={18} className="text-primary" weight="fill" />
+                                  <span className="text-sm font-semibold text-foreground">Proposed fixes</span>
                                 </div>
                                 {proposals.map((proposal) => (
                                   <FixProposalCard

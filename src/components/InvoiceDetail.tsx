@@ -7,12 +7,16 @@ interface InvoiceDetailProps {
   readonly invoice: Invoice;
   readonly exceptions: Exception[];
   readonly reviewedExceptionIds: ReadonlySet<string>;
+  readonly currentException: Exception | null;
+  readonly onSelectException: (exception: Exception) => void;
 }
 
 export default function InvoiceDetail({
   invoice,
   exceptions,
   reviewedExceptionIds,
+  currentException,
+  onSelectException,
 }: InvoiceDetailProps) {
   const pendingExceptions = exceptions.filter((e) => !reviewedExceptionIds.has(e.id));
   const hasExceptions = exceptions.length > 0;
@@ -88,9 +92,14 @@ export default function InvoiceDetail({
               const isResolved = reviewedExceptionIds.has(exception.id);
               const severityColor = getSeverityColor(exception.severity);
               return (
-                <div
+                <button
                   key={exception.id}
-                  className="flex items-center gap-3 py-3 px-4 rounded-lg bg-card border border-border"
+                  onClick={() => onSelectException(exception)}
+                  className={`w-full text-left flex items-center gap-3 py-3 px-4 rounded-lg border transition-colors ${
+                    currentException?.id === exception.id
+                      ? 'bg-primary/10 border-primary/30'
+                      : 'bg-card border-border hover:bg-accent/50'
+                  }`}
                   style={{ borderLeftWidth: '4px', borderLeftColor: isResolved ? '#10b981' : severityColor }}
                 >
                   {isResolved ? (
@@ -113,7 +122,7 @@ export default function InvoiceDetail({
                   >
                     {isResolved ? 'resolved' : exception.severity}
                   </span>
-                </div>
+                </button>
               );
             })}
           </div>

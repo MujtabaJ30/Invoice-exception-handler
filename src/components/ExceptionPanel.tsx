@@ -1,4 +1,5 @@
 import { Sparkle, Lightning, ArrowsClockwise } from '@phosphor-icons/react';
+import { motion } from 'framer-motion';
 import type { Exception } from '../types/index.ts';
 import { getExceptionTypeLabel, getSeverityColor } from '../lib/exceptions.ts';
 import SeverityIcon from './SeverityIcon.tsx';
@@ -10,6 +11,7 @@ interface ExceptionPanelProps {
   readonly onGenerateProposals: () => void;
   readonly onReapplyLearnedRule: () => void;
   readonly isProcessing: boolean;
+  readonly elapsedTime: number;
 }
 
 export default function ExceptionPanel({
@@ -19,6 +21,7 @@ export default function ExceptionPanel({
   onGenerateProposals,
   onReapplyLearnedRule,
   isProcessing,
+  elapsedTime,
 }: ExceptionPanelProps) {
   const severityColor = getSeverityColor(exception.severity);
   const isSkipped = skippedRuleId !== null;
@@ -67,50 +70,93 @@ export default function ExceptionPanel({
           ))}
         </div>
 
-        {isProcessing ? (
-          <div className="space-y-3">
-            <button
-              disabled
-              className="w-full inline-flex items-center justify-center gap-2 bg-primary/40 text-primary-foreground font-medium py-2.5 px-4 rounded-lg text-sm cursor-not-allowed"
-            >
-              <ArrowsClockwise size={18} className="animate-spin" />
-              Generating proposals…
-            </button>
-            <div className="space-y-2">
-              <div className="h-16 rounded-lg bg-surface animate-pulse" />
-              <div className="h-16 rounded-lg bg-surface animate-pulse" />
-            </div>
-          </div>
-        ) : isSkipped ? (
+        {isSkipped ? (
           <div className="flex gap-3">
             <button
               onClick={onReapplyLearnedRule}
-              className="flex-1 inline-flex items-center justify-center gap-2 bg-success/10 hover:bg-success/15 text-success font-medium py-2.5 px-4 rounded-lg transition-colors text-sm border border-success/20"
+              disabled={isProcessing}
+              className="flex-1 inline-flex items-center justify-center gap-2.5 bg-success/10 hover:bg-success/15 text-success font-semibold py-3 px-5 rounded-xl transition-colors text-sm border border-success/20 disabled:opacity-100"
             >
-              <Lightning size={16} weight="fill" />
-              Use learned fix again
+              {isProcessing ? (
+                <><ArrowsClockwise size={16} className="animate-spin" weight="bold" /> Working…</>
+              ) : (
+                <><Lightning size={16} weight="fill" /> Use learned fix again</>
+              )}
             </button>
             <button
               onClick={onGenerateProposals}
-              className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground font-medium py-2.5 px-4 rounded-lg transition-colors text-sm"
+              disabled={isProcessing}
+              className="flex-1 relative inline-flex items-center justify-between bg-primary text-primary-foreground font-semibold pt-3 pb-4 px-5 rounded-xl transition-colors text-sm disabled:opacity-100 overflow-hidden"
             >
-              Get new proposals
+              {isProcessing ? (
+                <>
+                  <span className="inline-flex items-center gap-2.5">
+                    <ArrowsClockwise size={16} className="animate-spin" weight="bold" />
+                    Generating…
+                  </span>
+                  <span className="font-mono tabular-nums opacity-70">{elapsedTime}s</span>
+                  <div className="absolute bottom-0 left-0 right-0 h-1 bg-primary-foreground/15 overflow-hidden">
+                    <motion.div
+                      className="h-full w-1/3 bg-primary-foreground/60 rounded-full"
+                      animate={{ x: ['-100%', '400%'] }}
+                      transition={{ duration: 1.8, ease: 'easeInOut', repeat: Infinity }}
+                    />
+                  </div>
+                </>
+              ) : (
+                'Get new proposals'
+              )}
             </button>
           </div>
         ) : hasLearnedRule ? (
           <button
             onClick={onGenerateProposals}
-            className="w-full inline-flex items-center justify-center gap-2 bg-success hover:bg-success/90 text-success-foreground font-medium py-2.5 px-4 rounded-lg transition-colors text-sm"
+            disabled={isProcessing}
+            className="w-full relative inline-flex items-center justify-between bg-success hover:bg-success/90 text-success-foreground font-semibold pt-3 pb-4 px-6 rounded-xl transition-colors text-sm disabled:opacity-100 overflow-hidden"
           >
-            <Lightning size={18} weight="fill" />
-            Apply learned fix
+            {isProcessing ? (
+              <>
+                <span className="inline-flex items-center gap-2.5">
+                  <ArrowsClockwise size={18} className="animate-spin" weight="bold" />
+                  Generating proposals…
+                </span>
+                <span className="font-mono tabular-nums opacity-70">{elapsedTime}s</span>
+                <div className="absolute bottom-0 left-0 right-0 h-1 bg-success-foreground/15 overflow-hidden">
+                  <motion.div
+                    className="h-full w-1/3 bg-success-foreground/50 rounded-full"
+                    animate={{ x: ['-100%', '400%'] }}
+                    transition={{ duration: 1.8, ease: 'easeInOut', repeat: Infinity }}
+                  />
+                </div>
+              </>
+            ) : (
+              <><Lightning size={18} weight="fill" /> Apply learned fix</>
+            )}
           </button>
         ) : (
           <button
             onClick={onGenerateProposals}
-            className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-medium py-2.5 px-4 rounded-lg transition-colors text-sm"
+            disabled={isProcessing}
+            className="w-full relative inline-flex items-center justify-between bg-primary hover:bg-primary/90 text-primary-foreground font-semibold pt-3 pb-4 px-6 rounded-xl transition-colors text-sm disabled:opacity-100 overflow-hidden"
           >
-            Get fix proposals
+            {isProcessing ? (
+              <>
+                <span className="inline-flex items-center gap-2.5">
+                  <ArrowsClockwise size={18} className="animate-spin" weight="bold" />
+                  Generating proposals…
+                </span>
+                <span className="font-mono tabular-nums opacity-70">{elapsedTime}s</span>
+                <div className="absolute bottom-0 left-0 right-0 h-1 bg-primary-foreground/15 overflow-hidden">
+                  <motion.div
+                    className="h-full w-1/3 bg-primary-foreground/60 rounded-full"
+                    animate={{ x: ['-100%', '400%'] }}
+                    transition={{ duration: 1.8, ease: 'easeInOut', repeat: Infinity }}
+                  />
+                </div>
+              </>
+            ) : (
+              'Get fix proposals'
+            )}
           </button>
         )}
       </div>
