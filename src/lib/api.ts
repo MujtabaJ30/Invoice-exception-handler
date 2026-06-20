@@ -210,3 +210,11 @@ export async function fetchMetrics(companyId: string): Promise<MetricsSnapshot> 
   const data = await response.json();
   return data.metrics;
 }
+
+export async function resetDatabase(companyId: string): Promise<void> {
+  await fetchWithRetry('/api/reset', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ companyId }),
+  });
+}

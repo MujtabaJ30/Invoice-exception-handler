@@ -10,6 +10,7 @@ import {
   Lightbulb,
   CheckCircle,
   Sparkle,
+  Trash,
 } from '@phosphor-icons/react';
 import type { Invoice, Exception, FixProposal, Review } from '../types/index.ts';
 import InvoiceList from './InvoiceList';
@@ -46,6 +47,7 @@ interface DashboardProps {
   readonly onCustomFix: (description: string) => Promise<void>;
   readonly onDismissOnboarding: () => void;
   readonly onIngestInvoices: (result: { invoices: Invoice[]; exceptions: Exception[] }) => void;
+  readonly onResetDemo: () => Promise<void>;
 }
 
 type TabKey = 'queue' | 'impact' | 'decisions' | 'how-it-works';
@@ -82,6 +84,7 @@ export default function Dashboard({
   onCustomFix,
   onDismissOnboarding,
   onIngestInvoices,
+  onResetDemo,
 }: DashboardProps) {
   const [activeTab, setActiveTab] = useState<TabKey>('queue');
   const [actingProposalId, setActingProposalId] = useState<string | null>(null);
@@ -100,11 +103,14 @@ export default function Dashboard({
     ? exceptions.filter((e) => e.invoiceId === currentInvoice.id)
     : [];
 
-  const reviewedExceptionIds = new Set(reviews.map((r) => r.exceptionId));
+  const currentExceptionIds = new Set(exceptions.map((e) => e.id));
+  const currentReviews = reviews.filter((r) => currentExceptionIds.has(r.exceptionId));
+
+  const reviewedExceptionIds = new Set(currentReviews.map((r) => r.exceptionId));
   const pendingExceptions = exceptions.filter((e) => !reviewedExceptionIds.has(e.id));
-  const handledCount = reviews.filter((r) => r.status !== 'rejected').length;
-  const rulesLearnedCount = reviews.filter((r) => r.status === 'approved' || r.status === 'corrected').length;
-  const autoResolvedCount = reviews.filter(
+  const handledCount = currentReviews.filter((r) => r.status !== 'rejected').length;
+  const rulesLearnedCount = currentReviews.filter((r) => r.status === 'approved' || r.status === 'corrected').length;
+  const autoResolvedCount = currentReviews.filter(
     (r) => r.status === 'approved' && r.decision?.id?.startsWith('learned_')
   ).length;
 
@@ -115,6 +121,16 @@ export default function Dashboard({
 
   const proposalsEndRef = useRef<HTMLDivElement>(null);
   const [elapsedTime, setElapsedTime] = useState(0);
+  const [isResetting, setIsResetting] = useState(false);
+
+  const handleReset = async () => {
+    setIsResetting(true);
+    try {
+      await onResetDemo();
+    } finally {
+      setIsResetting(false);
+    }
+  };
 
   useEffect(() => {
     if (!isProcessing) {
@@ -172,6 +188,15 @@ export default function Dashboard({
             <StatBadge value={handledCount} label="handled" color="success" />
             <StatBadge value={rulesLearnedCount} label="rules learned" color="foreground" />
             <div className="w-px h-5 bg-border" />
+            <button
+              onClick={handleReset}
+              disabled={isResetting}
+              className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50"
+              title="Reset all demo data and start fresh"
+            >
+              <Trash size={14} />
+              Reset demo
+            </button>
             <ThemeToggle />
           </div>
         </div>
@@ -325,13 +350,13 @@ export default function Dashboard({
               </div>
             )}
 
-            {activeTab === 'decisions' && <ReviewSummary reviews={reviews} exceptions={exceptions} />}
+            {activeTab === 'decisions' && <ReviewSummary reviews={reviews} exceptions={exceptions} invoices={invoices} />}
             {activeTab === 'impact' && (
               <MetricsDashboard
                 totalInvoices={invoices.length}
                 totalExceptions={exceptions.length}
                 resolvedExceptions={handledCount}
-                pendingExceptions={exceptions.length - handledCount}
+                pendingExceptions={pendingExceptions.length}
                 autoResolvedCount={autoResolvedCount}
                 learnedRulesCount={rulesLearnedCount}
               />

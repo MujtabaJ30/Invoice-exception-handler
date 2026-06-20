@@ -176,6 +176,16 @@ function devApiPlugin() {
           sendJson(res, 500, { error: message });
         }
       });
+
+      server.middlewares.use('/api/reset', async (req, res, next) => {
+        try {
+          await routeApiRequest(req, res, resolveApiPath('reset.ts'));
+        } catch (error) {
+          console.error('Dev API /reset error:', error);
+          const message = error instanceof Error ? error.message : 'Unknown error';
+          sendJson(res, 500, { error: message });
+        }
+      });
     },
   };
 }

@@ -86,4 +86,6 @@ export interface Database {
   updateInvoiceStatus(companyId: string, invoiceId: string, status: DbInvoice['status']): Promise<void>;
 
   getMetrics(companyId: string): Promise<MetricsSnapshot>;
+
+  clearAll(companyId: string): Promise<void>;
 }

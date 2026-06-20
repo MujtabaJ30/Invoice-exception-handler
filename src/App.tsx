@@ -14,7 +14,7 @@ import {
   buildLearnedProposal,
   getLearnedRules,
 } from './lib/learning';
-import { createReview, fetchInvoices, fetchReviews } from './lib/api';
+import { createReview, fetchInvoices, fetchReviews, resetDatabase } from './lib/api';
 import type { DbRule } from './lib/db';
 import Dashboard from './components/Dashboard';
 import { LoadingSpinner } from './components/LoadingSpinner';
@@ -435,6 +435,28 @@ export default function App() {
     });
   }, []);
 
+  const handleResetDemo = useCallback(async () => {
+    const { companyId } = stateRef.current;
+    setState((prev) => ({ ...prev, isProcessing: true, error: null }));
+    try {
+      await resetDatabase(companyId);
+      const { invoices: demoInvoices, exceptions: demoExceptions } = generateDemoInvoices();
+      setState({
+        ...INITIAL_STATE,
+        companyId,
+        invoices: demoInvoices,
+        exceptions: demoExceptions,
+        reviews: [],
+        learnedRules: [],
+        currentInvoice: demoInvoices[0] || null,
+        currentException: demoExceptions[0] || null,
+      });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Reset failed';
+      setState((prev) => ({ ...prev, error: message, isProcessing: false }));
+    }
+  }, []);
+
   if (state.invoices.length === 0) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-surface">
@@ -467,6 +489,7 @@ export default function App() {
       onCustomFix={handleCustomFix}
       onDismissOnboarding={handleDismissOnboarding}
       onIngestInvoices={handleIngestInvoices}
+      onResetDemo={handleResetDemo}
     />
   );
 }

@@ -200,7 +200,7 @@ export function detectExceptions(
     const result = detector(invoice);
     if (result) {
       exceptions.push({
-        id: `exc_${Math.random().toString(36).substring(2, 11)}`,
+        id: `exc_${invoice.id}_${result.type}`,
         invoiceId: invoice.id,
         type: result.type,
         severity: result.severity,

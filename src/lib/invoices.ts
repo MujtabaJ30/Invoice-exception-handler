@@ -75,7 +75,7 @@ function generateLineItem(): InvoiceLineItem {
 }
 
 /** Generate a clean invoice (no exceptions) */
-function generateCleanInvoice(): Invoice {
+function generateCleanInvoice(id?: string): Invoice {
   const vendor = VENDORS[randomNumber(0, VENDORS.length - 1)];
   const invoiceDate = randomDate(new Date('2024-01-01'), new Date('2024-06-30'));
   const dueDate = new Date(invoiceDate);
@@ -87,7 +87,7 @@ function generateCleanInvoice(): Invoice {
   const total = Math.round((subtotal + taxTotal) * 100) / 100;
 
   return {
-    id: generateId(),
+    id: id ?? generateId(),
     invoiceNumber: `INV-${randomNumber(1000, 9999)}`,
     vendorId: vendor.id,
     vendorName: vendor.name,
@@ -102,55 +102,20 @@ function generateCleanInvoice(): Invoice {
   };
 }
 
-/** Generate an invoice with a missing PO number */
-function generateMissingPOInvoice(): Invoice {
-  const invoice = generateCleanInvoice();
-  return { ...invoice, poNumber: null };
-}
-
-/** Generate a duplicate invoice (same invoice number as another) */
-function generateDuplicateInvoice(originalInvoice: Invoice): Invoice {
-  const invoice = generateCleanInvoice();
-  return { ...invoice, invoiceNumber: originalInvoice.invoiceNumber };
-}
-
-/** Generate an invoice with amount mismatch */
-function generateAmountMismatchInvoice(): Invoice {
-  const invoice = generateCleanInvoice();
-  // Deliberately set total to not match subtotal + tax
-  const wrongTotal = invoice.subtotal + invoice.taxTotal + randomNumber(100, 500);
-  return { ...invoice, total: Math.round(wrongTotal * 100) / 100 };
-}
-
-/** Generate an invoice with tax calculation error */
-function generateTaxErrorInvoice(): Invoice {
-  const invoice = generateCleanInvoice();
-  // Deliberately set tax to wrong amount
-  const wrongTax = invoice.taxTotal * randomNumber(2, 3);
-  return { ...invoice, taxTotal: Math.round(wrongTax * 100) / 100 };
-}
-
-/** Generate an invoice with vendor not in master list */
-function generateUnknownVendorInvoice(): Invoice {
-  const invoice = generateCleanInvoice();
-  return {
-    ...invoice,
-    vendorId: 'v_unknown',
-    vendorName: 'Unknown Vendor LLC',
-  };
-}
-
 /** Generate a set of demo invoices with various exceptions */
 export function generateDemoInvoices(): {
   invoices: Invoice[];
   exceptions: Exception[];
 } {
-  const cleanInvoice = generateCleanInvoice();
-  const missingPOInvoice = generateMissingPOInvoice();
-  const duplicateInvoice = generateDuplicateInvoice(cleanInvoice);
-  const amountMismatchInvoice = generateAmountMismatchInvoice();
-  const taxErrorInvoice = generateTaxErrorInvoice();
-  const unknownVendorInvoice = generateUnknownVendorInvoice();
+  const cleanInvoice = generateCleanInvoice('inv_demo_clean');
+  const missingPOInvoice = { ...generateCleanInvoice('inv_demo_missing_po'), poNumber: null };
+  const duplicateInvoice = { ...generateCleanInvoice('inv_demo_duplicate'), invoiceNumber: cleanInvoice.invoiceNumber };
+  const amountMismatchInvoice = { ...generateCleanInvoice('inv_demo_amount_mismatch') };
+  // wrong total: subtotal + tax + extra
+  amountMismatchInvoice.total = Math.round((amountMismatchInvoice.subtotal + amountMismatchInvoice.taxTotal + randomNumber(100, 500)) * 100) / 100;
+  const taxErrorInvoice = { ...generateCleanInvoice('inv_demo_tax_error') };
+  taxErrorInvoice.taxTotal = Math.round(taxErrorInvoice.taxTotal * randomNumber(2, 3) * 100) / 100;
+  const unknownVendorInvoice = { ...generateCleanInvoice('inv_demo_unknown_vendor'), vendorId: 'vendor_unknown', vendorName: 'Unknown Vendor LLC' };
 
   const invoices = [
     cleanInvoice,

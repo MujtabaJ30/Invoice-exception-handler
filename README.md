@@ -1,84 +1,98 @@
 # Exception Engine
 
-A working MVP for the Zamp AI PM assignment. It is an exception handler for invoice processing: deterministic detection, LLM-generated fix proposals, human approval, and a learning loop that persists in a real database.
+An AI employee for invoice exception handling. Built for the Zamp AI PM assignment.
 
-## What it does
+Exceptions eat 40% of AP team time. Most invoices match their PO and post automatically. The 20% that don't are where teams get stuck: chasing vendors, recalculating taxes, hunting down missing documents. This engine handles that gap, end-to-end.
 
-1. **Detects exceptions** using deterministic rules: missing PO, duplicate invoice, amount mismatch, tax error, unknown vendor, future date, negative amount.
-2. **Generates fix proposals** with an LLM when an exception needs a decision.
-3. **Learns from approvals**: saved rules apply automatically to similar exceptions later.
-4. **Shows ROI metrics**: touchless rate, cost per invoice, resolved exceptions, learned rules.
-5. **Ingests invoices** via JSON upload so the learning loop is demonstrable with fresh data.
+**What it does:**
 
-## Why this matters for Zamp
+- Detects 7 types of invoice exceptions with deterministic rules (no false positives)
+- Uses an LLM to draft fix proposals with confidence scores
+- Lets a person approve, skip, or write a custom fix
+- Learns from every approval. Same exception pattern next time? Resolved automatically.
+- Shows real-time ROI metrics: touchless rate, cost per invoice, rules learned
 
-Zamp's AI employee handles the routine invoice flow. The real bottleneck is exceptions. Most AP teams underestimate their exception rate. This tool is the layer that lets the AI employee keep working when invoices break, with human review only when needed.
+**Why it fits Zamp:**
+
+Zamp ships AI employees that own jobs end-to-end. This engine demonstrates the exact pattern for AP exception handling: deterministic detection catches the issue, the AI employee proposes a resolution, a human stays in the loop for judgment, and every correction makes the system better. The goal is Zamp's own benchmark: 85%+ touchless processing, cost per invoice below $3.
+
+**Live demo:** https://exception-engine.vercel.app
+
+## Architecture
+
+```
+User clicks "Get fix proposals"
+        │
+        ▼
+┌──────────────────┐      ┌─────────────────┐
+│  Deterministic   │      │  LLM (DeepSeek)  │
+│  rule engine     │ ───► │  generates       │
+│  detects issue   │      │  fix proposals   │
+└──────────────────┘      └─────────────────┘
+        │                         │
+        ▼                         ▼
+┌──────────────────┐      ┌─────────────────┐
+│  User approves,  │      │  Pattern saved   │
+│  skips, or writes│ ───► │  to Postgres.    │
+│  custom fix      │      │  Applied next     │
+└──────────────────┘      │  time.           │
+                          └─────────────────┘
+```
+
+- **Detection:** Deterministic rules. No AI guessing on what's wrong.
+- **Proposals:** LLM generates fixes. AI never approves money on its own.
+- **Learning:** Exact field-level pattern matching. Not fuzzy string search.
+- **Persistence:** Postgres (or local JSON in dev). Rules survive restarts.
 
 ## Tech stack
 
-- **Frontend**: React 19 + TypeScript + Vite
-- **Styling**: Tailwind CSS v4 with OKLCH design tokens
-- **LLM**: OpenCode Go API (deepseek-v4-flash)
-- **Backend**: Vercel serverless functions
-- **Database**: Neon Postgres via `@neondatabase/serverless` (falls back to local JSON file in dev)
-- **Validation**: Zod for structured LLM output
-- **Tests**: Vitest
+| Layer | Choice |
+|-------|--------|
+| Frontend | React 19, TypeScript, Vite |
+| Styling | Tailwind CSS v4, OKLCH color space |
+| LLM | OpenCode Go API (DeepSeek v4 Flash) |
+| Backend | Vercel serverless functions |
+| Database | Postgres (`@vercel/postgres`), local JSON fallback |
+| Animation | Framer Motion |
+| Validation | Zod (structured LLM output) |
+| Testing | Vitest |
 
-## Local setup
+## Running locally
 
-1. Clone the repo and install dependencies:
-   ```bash
-   npm install
-   ```
-
-2. Create a `.env` file:
-   ```
-   OPENCODE_GO_API_KEY=your-key-here
-   DATABASE_URL=your-neon-connection-string  # optional; local JSON fallback works without it
-   ```
-
-3. Start the dev server:
-   ```bash
-   npm run dev
-   ```
-
-4. Run tests:
-   ```bash
-   npm test
-   ```
-
-## Deploy to Vercel
-
-1. Push to GitHub.
-2. Import in Vercel.
-3. Add `OPENCODE_GO_API_KEY` and `DATABASE_URL` in the Vercel dashboard.
-4. Deploy.
+```bash
+npm install
+# Create .env with OPENCODE_GO_API_KEY
+npm run dev        # localhost:5173
+npm test           # 10 tests
+npm run build      # production build
+```
 
 ## Project structure
 
 ```
-exception-engine/
-├── api/                     # Vercel serverless functions
-│   ├── generate.ts          # LLM fix proposal generation
-│   ├── rules.ts             # Learned rules CRUD
-│   ├── reviews.ts           # Review decisions
-│   ├── invoices.ts          # Invoice ingestion and listing
-│   └── metrics.ts           # ROI metrics
+├── api/               Vercel serverless functions
+│   ├── generate.ts    LLM fix proposals
+│   ├── rules.ts       Learned rules CRUD
+│   ├── reviews.ts     Decision logging
+│   ├── invoices.ts    Invoice ingestion
+│   ├── metrics.ts     ROI calculations
+│   └── reset.ts       Demo reset
 ├── src/
-│   ├── components/          # React components
+│   ├── components/    Dashboard, ExceptionPanel, FixProposalCard,
+│   │                  MetricsDashboard, InvoiceList, HowItWorks
 │   ├── lib/
-│   │   ├── api.ts           # Frontend API client
-│   │   ├── db/              # Database abstraction (Postgres + local fallback)
-│   │   ├── exceptions.ts    # Deterministic exception detection
-│   │   ├── invoices.ts      # Mock invoice generator
-│   │   └── learning.ts      # Learning loop client
-│   ├── types/               # TypeScript types
-│   ├── App.tsx              # Root state management
-│   └── index.css            # Design system
-├── docs/                    # Plan, decisions, context
-└── README.md
+│   │   ├── exceptions.ts   Detection engine (7 rules)
+│   │   ├── db/             Postgres + local JSON abstraction
+│   │   ├── api.ts          Frontend API client with retry
+│   │   ├── learning.ts     Rule matching and application
+│   │   └── invoices.ts     Deterministic demo data
+│   └── types/              TypeScript interfaces
+└── docs/              Pitch, plan, decisions
 ```
 
-## License
+## What's next
 
-ISC
+- PDF/OCR ingestion with LLM extraction
+- ERP connectors (Netsuite, SAP, Oracle)
+- Approval routing by amount tier with SLA tracking
+- Multi-tenant enterprise support

@@ -176,6 +176,10 @@ export class LocalDatabase implements Database {
     }
   }
 
+  async clearAll(_companyId: string): Promise<void> {
+    writeDb({ rules: [], reviews: [], invoices: [] });
+  }
+
   async getMetrics(companyId: string): Promise<MetricsSnapshot> {
     const db = readDb();
     const invoices = db.invoices.filter((i) => i.companyId === companyId);

@@ -182,6 +182,13 @@ export class PostgresDatabase implements Database {
     `;
   }
 
+  async clearAll(companyId: string): Promise<void> {
+    const sql = getSql();
+    await sql`DELETE FROM exception_reviews WHERE company_id = ${companyId}`;
+    await sql`DELETE FROM exception_rules WHERE company_id = ${companyId}`;
+    await sql`DELETE FROM exception_invoices WHERE company_id = ${companyId}`;
+  }
+
   async getMetrics(companyId: string): Promise<MetricsSnapshot> {
     const sql = getSql();
 

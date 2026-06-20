@@ -8,6 +8,10 @@ interface MetricsDashboardProps {
 }
 
 const MANUAL_COST_PER_INVOICE = 13.5;
+const MIN_COST_PER_INVOICE = 1.5;
+const MINUTES_PER_EXCEPTION = 12;
+const LABOR_RATE_PER_HOUR = 45;
+const ZAMP_TARGET_COST = 2.75;
 
 export default function MetricsDashboard({
   totalInvoices,
@@ -20,13 +24,18 @@ export default function MetricsDashboard({
   const touchlessRate = totalExceptions > 0 ? autoResolvedCount / totalExceptions : 0;
   const touchlessRatePct = Math.round(touchlessRate * 100);
 
-  const laborHoursSaved = (resolvedExceptions * 12) / 60;
-  const costSaved = laborHoursSaved * 45;
-  const costPerInvoice =
-    totalInvoices > 0
-      ? Math.max(0, MANUAL_COST_PER_INVOICE - costSaved / totalInvoices)
-      : MANUAL_COST_PER_INVOICE;
-  const potentialSavings = Math.max(0, MANUAL_COST_PER_INVOICE - costPerInvoice);
+  const laborHoursSaved = (resolvedExceptions * MINUTES_PER_EXCEPTION) / 60;
+  const costSaved = laborHoursSaved * LABOR_RATE_PER_HOUR;
+  const invoicesForCalc = Math.max(1, totalInvoices);
+  const costPerInvoice = Math.max(
+    MIN_COST_PER_INVOICE,
+    MANUAL_COST_PER_INVOICE - costSaved / invoicesForCalc,
+  );
+  const savings = Math.min(
+    MANUAL_COST_PER_INVOICE - MIN_COST_PER_INVOICE,
+    MANUAL_COST_PER_INVOICE - costPerInvoice,
+  );
+  const savingsPct = Math.round((savings / MANUAL_COST_PER_INVOICE) * 100);
 
   return (
     <div className="space-y-6">
@@ -34,25 +43,25 @@ export default function MetricsDashboard({
         <MetricCard
           label="Touchless rate"
           value={`${touchlessRatePct}%`}
-          subtext="Exceptions resolved without a person"
+          subtext={`${autoResolvedCount} of ${totalExceptions} auto-resolved`}
           color="success"
         />
         <MetricCard
           label="Cost per invoice"
-          value={`$${costPerInvoice.toFixed(2)}`}
-          subtext={`Down from $${MANUAL_COST_PER_INVOICE.toFixed(2)} manual baseline`}
+          value={`$${costPerInvoice.toFixed(0)}`}
+          subtext={`$${savings.toFixed(0)} saved per invoice vs $${MANUAL_COST_PER_INVOICE.toFixed(0)} baseline`}
           color="primary"
         />
         <MetricCard
-          label="Exceptions handled"
+          label="Exceptions resolved"
           value={String(resolvedExceptions)}
-          subtext={`${pendingExceptions} still pending`}
+          subtext={`${pendingExceptions} pending · ${savingsPct}% cost reduction`}
           color="warning"
         />
         <MetricCard
           label="Rules learned"
           value={String(learnedRulesCount)}
-          subtext="Patterns saved from decisions"
+          subtext={`Targeting $${ZAMP_TARGET_COST.toFixed(0)}/invoice with scaling`}
           color="foreground"
         />
       </div>
@@ -61,7 +70,7 @@ export default function MetricsDashboard({
         <h3 className="text-sm font-semibold text-foreground mb-4">Impact estimate</h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div>
-            <p className="text-xs text-muted-foreground uppercase tracking-wide">Invoices processed</p>
+            <p className="text-xs text-muted-foreground uppercase tracking-wide">Pending invoices</p>
             <p className="text-2xl font-bold font-mono text-foreground mt-1 tabular-nums">
               {totalInvoices}
             </p>
@@ -75,7 +84,7 @@ export default function MetricsDashboard({
           <div>
             <p className="text-xs text-muted-foreground uppercase tracking-wide">Savings per invoice</p>
             <p className="text-2xl font-bold font-mono text-success mt-1 tabular-nums">
-              ${potentialSavings.toFixed(2)}
+              ${savings.toFixed(2)}
             </p>
           </div>
         </div>
@@ -83,11 +92,25 @@ export default function MetricsDashboard({
 
       <div className="bg-surface rounded-xl border border-border p-6">
         <h3 className="text-sm font-semibold text-foreground mb-2">How we calculate impact</h3>
-        <p className="text-sm text-muted-foreground leading-relaxed">
-          Zamp's target for enterprise AP is a 70-90% touchless rate. The baseline manual cost is
-          roughly $13-23 per invoice. Every learned rule here is one less decision for a person to
-          make later. Every auto-resolved exception is one less interruption for the finance team.
-        </p>
+        <div className="space-y-2 text-sm text-muted-foreground leading-relaxed">
+          <p>
+            <span className="font-medium text-foreground">Baseline:</span> Manual AP processing at{' '}
+            <span className="font-mono text-foreground">${MANUAL_COST_PER_INVOICE.toFixed(0)}/invoice</span>,{' '}
+            {MINUTES_PER_EXCEPTION} min per exception at{' '}
+            <span className="font-mono text-foreground">${LABOR_RATE_PER_HOUR}/hr</span>.
+          </p>
+          <p>
+            <span className="font-medium text-foreground">Touchless rate:</span> Percentage of exceptions
+            resolved by a learned rule without any person reviewing it. Zamp targets 85-90%.
+          </p>
+          <p>
+            <span className="font-medium text-foreground">Cost floor:</span> Savings are capped at{' '}
+            <span className="font-mono text-foreground">${(MANUAL_COST_PER_INVOICE - MIN_COST_PER_INVOICE).toFixed(0)}</span>{' '}
+            per invoice — the cost never drops below{' '}
+            <span className="font-mono text-foreground">${MIN_COST_PER_INVOICE.toFixed(0)}</span> to
+            account for infrastructure and oversight.
+          </p>
+        </div>
       </div>
     </div>
   );
