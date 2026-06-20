@@ -14,8 +14,8 @@ import {
   buildLearnedProposal,
   getLearnedRules,
 } from './lib/learning';
-import { createReview, fetchInvoices, fetchReviews, resetDatabase } from './lib/api';
-import type { DbRule } from './lib/db';
+import { createReview, fetchReviews, resetDatabase } from './lib/api';
+import type { DbRule, DbReview } from './lib/db';
 import Dashboard from './components/Dashboard';
 import { LoadingSpinner } from './components/LoadingSpinner';
 
