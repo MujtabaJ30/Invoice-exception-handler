@@ -274,9 +274,9 @@ function getExceptionRelevantKeys(exceptionType: ExceptionType): string[] {
     case 'duplicate_invoice':
       return ['invoiceNumber'];
     case 'amount_mismatch':
-      return ['difference'];
+      return [];
     case 'tax_calculation_error':
-      return ['difference'];
+      return [];
     case 'vendor_not_found':
       return ['vendorName'];
     default:
