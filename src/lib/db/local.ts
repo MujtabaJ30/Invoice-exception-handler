@@ -105,30 +105,6 @@ export class LocalDatabase implements Database {
     return newRule;
   }
 
-  async incrementRuleAppliedCount(ruleId: string): Promise<void> {
-    const db = readDb();
-    const index = db.rules.findIndex((r) => r.id === ruleId);
-    if (index >= 0) {
-      db.rules[index] = {
-        ...db.rules[index],
-        appliedCount: db.rules[index].appliedCount + 1,
-        lastAppliedAt: new Date().toISOString(),
-      };
-      writeDb(db);
-    }
-  }
-
-  async deleteRule(ruleId: string): Promise<boolean> {
-    const db = readDb();
-    const initialLength = db.rules.length;
-    db.rules = db.rules.filter((r) => r.id !== ruleId);
-    if (db.rules.length < initialLength) {
-      writeDb(db);
-      return true;
-    }
-    return false;
-  }
-
   async createReview(input: CreateReviewInput): Promise<DbReview> {
     const db = readDb();
     const review: DbReview = {
@@ -185,11 +161,6 @@ export class LocalDatabase implements Database {
     return db.invoices
       .filter((i) => i.companyId === companyId)
       .sort((a, b) => b.detectedAt.localeCompare(a.detectedAt));
-  }
-
-  async getInvoice(companyId: string, invoiceId: string): Promise<DbInvoice | null> {
-    const db = readDb();
-    return db.invoices.find((i) => i.companyId === companyId && i.id === invoiceId) || null;
   }
 
   async updateInvoiceStatus(

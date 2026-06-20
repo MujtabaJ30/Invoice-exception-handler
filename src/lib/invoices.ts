@@ -168,12 +168,4 @@ export function generateDemoInvoices(): {
   return { invoices, exceptions };
 }
 
-/** Get a vendor by ID */
-export function getVendorById(vendorId: string): Vendor | undefined {
-  return VENDORS.find((v) => v.id === vendorId);
-}
 
-/** Get all vendors */
-export function getAllVendors(): readonly Vendor[] {
-  return VENDORS;
-}

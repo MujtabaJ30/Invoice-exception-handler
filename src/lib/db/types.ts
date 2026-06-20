@@ -77,15 +77,12 @@ export interface Database {
   getRules(companyId: string, exceptionType?: ExceptionType): Promise<DbRule[]>;
   findRule(companyId: string, exceptionType: ExceptionType, pattern: string): Promise<DbRule | null>;
   createOrUpdateRule(input: CreateRuleInput): Promise<DbRule>;
-  incrementRuleAppliedCount(ruleId: string): Promise<void>;
-  deleteRule(ruleId: string): Promise<boolean>;
 
   createReview(input: CreateReviewInput): Promise<DbReview>;
   getReviews(companyId: string): Promise<DbReview[]>;
 
   createInvoice(input: CreateInvoiceInput): Promise<DbInvoice>;
   getInvoices(companyId: string): Promise<DbInvoice[]>;
-  getInvoice(companyId: string, invoiceId: string): Promise<DbInvoice | null>;
   updateInvoiceStatus(companyId: string, invoiceId: string, status: DbInvoice['status']): Promise<void>;
 
   getMetrics(companyId: string): Promise<MetricsSnapshot>;

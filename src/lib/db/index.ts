@@ -13,7 +13,4 @@ export function getDatabase(): Database {
   return sharedDatabase;
 }
 
-export async function initializeDatabase(): Promise<void> {
-  const db = getDatabase();
-  await db.initialize();
-}
+

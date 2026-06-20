@@ -129,21 +129,6 @@ export class PostgresDatabase implements Database {
     return mapRuleRow(rows[0]);
   }
 
-  async incrementRuleAppliedCount(ruleId: string): Promise<void> {
-    const sql = getSql();
-    await sql`
-      UPDATE exception_rules
-      SET applied_count = applied_count + 1, last_applied_at = NOW()
-      WHERE id = ${ruleId}
-    `;
-  }
-
-  async deleteRule(ruleId: string): Promise<boolean> {
-    const sql = getSql();
-    const result = await sql`DELETE FROM exception_rules WHERE id = ${ruleId}`;
-    return (result as unknown as { count: number }).count > 0;
-  }
-
   async createReview(input: CreateReviewInput): Promise<DbReview> {
     const sql = getSql();
     const id = `review_${generateId()}`;
@@ -182,12 +167,6 @@ export class PostgresDatabase implements Database {
     const sql = getSql();
     const rows = await sql`SELECT * FROM exception_invoices WHERE company_id = ${companyId} ORDER BY detected_at DESC`;
     return rows.map(mapInvoiceRow);
-  }
-
-  async getInvoice(companyId: string, invoiceId: string): Promise<DbInvoice | null> {
-    const sql = getSql();
-    const rows = await sql`SELECT * FROM exception_invoices WHERE company_id = ${companyId} AND id = ${invoiceId} LIMIT 1`;
-    return rows.length > 0 ? mapInvoiceRow(rows[0]) : null;
   }
 
   async updateInvoiceStatus(

@@ -31,6 +31,4 @@ export default function SeverityIcon({ severity, size = 20, className = '' }: Se
   );
 }
 
-export function SeverityLabel({ severity }: { readonly severity: ExceptionSeverity }) {
-  return <span className="sr-only">{LABELS[severity]} severity</span>;
-}
+

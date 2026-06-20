@@ -211,17 +211,6 @@ export async function fetchMetrics(companyId: string): Promise<MetricsSnapshot> 
   return data.metrics;
 }
 
-export async function checkApiHealth(): Promise<boolean> {
-  try {
-    const response = await fetch('/api/generate', {
-      signal: AbortSignal.timeout(5000),
-    });
-    return response.ok;
-  } catch {
-    return false;
-  }
-}
-
 export function generateExceptionPattern(
   exceptionType: ExceptionType,
   details: Record<string, unknown>
