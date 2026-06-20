@@ -303,7 +303,9 @@ export default function App() {
         currentException: nextException,
         proposals: [],
         learnedRules: [
-          ...prev.learnedRules.filter((r) => r.id !== localRule.id),
+          ...prev.learnedRules.filter(
+            (r) => !(r.exceptionType === currentException.type && r.pattern === pattern)
+          ),
           localRule,
         ],
         lastLearnedRule: localRule,
@@ -427,7 +429,9 @@ export default function App() {
         currentException: nextException,
         proposals: [],
         learnedRules: [
-          ...prev.learnedRules.filter((r) => r.id !== localRule.id),
+          ...prev.learnedRules.filter(
+            (r) => !(r.exceptionType === currentException.type && r.pattern === pattern)
+          ),
           localRule,
         ],
         lastLearnedRule: localRule,
@@ -486,13 +490,14 @@ export default function App() {
   }
 
   return (
-    <Dashboard
-      companyId={state.companyId}
-      invoices={state.invoices}
-      exceptions={state.exceptions}
-      proposals={state.proposals}
-      reviews={state.reviews}
-      currentInvoice={state.currentInvoice}
+      <Dashboard
+        companyId={state.companyId}
+        invoices={state.invoices}
+        exceptions={state.exceptions}
+        proposals={state.proposals}
+        reviews={state.reviews}
+        learnedRules={state.learnedRules}
+        currentInvoice={state.currentInvoice}
       currentException={state.currentException}
       isProcessing={state.isProcessing}
       error={state.error}

@@ -37,16 +37,26 @@ export default function ReviewSummary({ reviews, exceptions, invoices }: ReviewS
       const invoice = exception ? invoices.find((i) => i.id === exception.invoiceId) : undefined;
       return { review, exception, invoice };
     })
-    .sort((a, b) => b.review.reviewedAt.localeCompare(a.review.reviewedAt));
+    .sort((a, b) => b.review.reviewedAt.localeCompare(a.review.reviewedAt))
+    .filter(
+      ({ review }, index, arr) =>
+        arr.findIndex((r) => r.review.exceptionId === review.exceptionId) === index
+    );
 
   const filtered = filter === 'all'
     ? reviewsWithContext
     : reviewsWithContext.filter((r) => r.review.status === filter);
 
-  const approvedCount = reviews.filter((r) => r.status === 'approved').length;
-  const rejectedCount = reviews.filter((r) => r.status === 'rejected').length;
-  const correctedCount = reviews.filter((r) => r.status === 'corrected').length;
-  const learnedCount = approvedCount + correctedCount;
+  const approvedIds = new Set(reviews.filter((r) => r.status === 'approved').map((r) => r.exceptionId));
+  const rejectedIds = new Set(reviews.filter((r) => r.status === 'rejected').map((r) => r.exceptionId));
+  const correctedIds = new Set(reviews.filter((r) => r.status === 'corrected').map((r) => r.exceptionId));
+  const approvedCount = approvedIds.size;
+  const rejectedCount = rejectedIds.size;
+  const correctedCount = correctedIds.size;
+  const learnedExceptionIds = new Set(
+    reviews.filter((r) => r.status === 'approved' || r.status === 'corrected').map((r) => r.exceptionId)
+  );
+  const learnedCount = learnedExceptionIds.size;
 
   if (reviews.length === 0) {
     return (

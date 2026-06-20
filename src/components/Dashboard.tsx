@@ -13,6 +13,7 @@ import {
   Trash,
 } from '@phosphor-icons/react';
 import type { Invoice, Exception, FixProposal, Review } from '../types/index.ts';
+import type { DbRule } from '../lib/db';
 import InvoiceList from './InvoiceList';
 import InvoiceDetail from './InvoiceDetail';
 import ExceptionPanel from './ExceptionPanel';
@@ -30,6 +31,7 @@ interface DashboardProps {
   readonly exceptions: Exception[];
   readonly proposals: FixProposal[];
   readonly reviews: Review[];
+  readonly learnedRules: DbRule[];
   readonly currentInvoice: Invoice | null;
   readonly currentException: Exception | null;
   readonly isProcessing: boolean;
@@ -67,6 +69,7 @@ export default function Dashboard({
   exceptions,
   proposals,
   reviews,
+  learnedRules,
   currentInvoice,
   currentException,
   isProcessing,
@@ -110,8 +113,11 @@ export default function Dashboard({
 
   const reviewedExceptionIds = new Set(currentReviews.map((r) => r.exceptionId));
   const pendingExceptions = exceptions.filter((e) => !reviewedExceptionIds.has(e.id));
-  const handledCount = currentReviews.filter((r) => r.status !== 'rejected').length;
-  const rulesLearnedCount = currentReviews.filter((r) => r.status === 'approved' || r.status === 'corrected').length;
+  const handledExceptionIds = new Set(
+    currentReviews.filter((r) => r.status !== 'rejected').map((r) => r.exceptionId)
+  );
+  const handledCount = handledExceptionIds.size;
+  const rulesLearnedCount = learnedRules.length;
   const autoResolvedCount = currentReviews.filter(
     (r) => r.status === 'approved' && r.decision?.id?.startsWith('learned_')
   ).length;
