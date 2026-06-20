@@ -249,3 +249,37 @@ export function getSeverityIcon(severity: ExceptionSeverity): string {
   };
   return icons[severity];
 }
+
+/** Build a deterministic pattern string for an exception to use for learned rule matching */
+export function generateExceptionPattern(
+  exceptionType: ExceptionType,
+  details: Record<string, unknown>
+): string {
+  const relevantKeys = getExceptionRelevantKeys(exceptionType);
+  const relevantDetails: Record<string, unknown> = {};
+
+  for (const key of relevantKeys) {
+    if (key in details) {
+      relevantDetails[key] = details[key];
+    }
+  }
+
+  return `${exceptionType}:${JSON.stringify(relevantDetails)}`;
+}
+
+function getExceptionRelevantKeys(exceptionType: ExceptionType): string[] {
+  switch (exceptionType) {
+    case 'missing_po':
+      return ['vendorName'];
+    case 'duplicate_invoice':
+      return ['invoiceNumber'];
+    case 'amount_mismatch':
+      return ['difference'];
+    case 'tax_calculation_error':
+      return ['difference'];
+    case 'vendor_not_found':
+      return ['vendorName'];
+    default:
+      return [];
+  }
+}

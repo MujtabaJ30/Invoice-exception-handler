@@ -210,36 +210,3 @@ export async function fetchMetrics(companyId: string): Promise<MetricsSnapshot> 
   const data = await response.json();
   return data.metrics;
 }
-
-export function generateExceptionPattern(
-  exceptionType: ExceptionType,
-  details: Record<string, unknown>
-): string {
-  const relevantKeys = getRelevantKeys(exceptionType);
-  const relevantDetails: Record<string, unknown> = {};
-
-  for (const key of relevantKeys) {
-    if (key in details) {
-      relevantDetails[key] = details[key];
-    }
-  }
-
-  return `${exceptionType}:${JSON.stringify(relevantDetails)}`;
-}
-
-function getRelevantKeys(exceptionType: ExceptionType): string[] {
-  switch (exceptionType) {
-    case 'missing_po':
-      return ['vendorName'];
-    case 'duplicate_invoice':
-      return ['invoiceNumber'];
-    case 'amount_mismatch':
-      return ['difference'];
-    case 'tax_calculation_error':
-      return ['difference'];
-    case 'vendor_not_found':
-      return ['vendorName'];
-    default:
-      return [];
-  }
-}

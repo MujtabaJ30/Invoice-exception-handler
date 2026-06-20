@@ -7,7 +7,8 @@ import type {
   ExceptionType,
 } from './types';
 import { generateDemoInvoices } from './lib/invoices';
-import { generateFixProposals, generateExceptionPattern } from './lib/api';
+import { generateFixProposals } from './lib/api';
+import { generateExceptionPattern } from './lib/exceptions';
 import {
   addLearnedRule,
   buildLearnedProposal,
