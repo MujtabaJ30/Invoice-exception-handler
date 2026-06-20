@@ -306,22 +306,21 @@ export default function App() {
     });
   }, [moveToNextException]);
 
-  const handleRejectFix = useCallback((proposal: FixProposal) => {
+  const handleRejectFix = useCallback(async (proposal: FixProposal) => {
+    const { currentException, currentInvoice, companyId } = stateRef.current;
+    if (!currentException || !currentInvoice) return;
+
+    const review = await createReview(companyId, {
+      exceptionId: currentException.id,
+      invoiceId: currentInvoice.id,
+      proposalId: proposal.id,
+      status: 'rejected',
+      decision: null,
+      correctedBy: null,
+      notes: 'Rejected by user',
+    });
+
     setState((prev) => {
-      const { currentException } = prev;
-      if (!currentException) return prev;
-
-      const review: Review = {
-        id: `review_${Date.now()}`,
-        exceptionId: currentException.id,
-        proposalId: proposal.id,
-        status: 'rejected',
-        decision: null,
-        correctedBy: null,
-        reviewedAt: new Date().toISOString(),
-        notes: 'Rejected by user',
-      };
-
       const isLearnedProposal = proposal.id.startsWith('learned_');
       const remainingProposals = prev.proposals.filter((p) => p.id !== proposal.id);
 
@@ -331,9 +330,20 @@ export default function App() {
         if (typeof ruleId === 'string') updatedSkipped.add(ruleId);
       }
 
+      const rejectedReview: Review = {
+        id: review.id,
+        exceptionId: review.exceptionId,
+        proposalId: review.proposalId,
+        status: review.status,
+        decision: review.decision,
+        correctedBy: review.correctedBy,
+        reviewedAt: review.reviewedAt,
+        notes: review.notes,
+      };
+
       return {
         ...prev,
-        reviews: [...prev.reviews, review],
+        reviews: [...prev.reviews, rejectedReview],
         proposals: remainingProposals,
         skippedLearnedRuleIds: updatedSkipped,
       };
