@@ -12,7 +12,9 @@ import type {
 } from './types.ts';
 import type { ExceptionType } from '../../types/index.ts';
 
-const DATA_DIR = join(process.cwd(), '.local-data');
+const DATA_DIR = process.env.VERCEL
+  ? '/tmp'
+  : join(process.cwd(), '.local-data');
 const DATA_FILE = join(DATA_DIR, 'db.json');
 const MANUAL_COST_PER_INVOICE = 13.5;
 
@@ -35,10 +37,14 @@ function readDb(): LocalDbSnapshot {
 }
 
 function writeDb(snapshot: LocalDbSnapshot): void {
-  if (!existsSync(DATA_DIR)) {
-    mkdirSync(DATA_DIR, { recursive: true });
+  try {
+    if (!existsSync(DATA_DIR)) {
+      mkdirSync(DATA_DIR, { recursive: true });
+    }
+    writeFileSync(DATA_FILE, JSON.stringify(snapshot, null, 2));
+  } catch {
+    // Silently fail — Vercel /tmp is ephemeral and this is non-critical
   }
-  writeFileSync(DATA_FILE, JSON.stringify(snapshot, null, 2));
 }
 
 export class LocalDatabase implements Database {

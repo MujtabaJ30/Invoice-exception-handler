@@ -271,18 +271,59 @@ export default function App() {
     const { currentException, currentInvoice, companyId } = stateRef.current;
     if (!currentException || !currentInvoice) return;
 
-    const review = await createReview(companyId, {
-      exceptionId: currentException.id,
-      invoiceId: currentInvoice.id,
-      proposalId: proposal.id,
-      status: 'approved',
-      decision: proposal,
-      correctedBy: null,
-      notes: null,
-    });
+    let review: Review;
+    let newRule: DbRule;
 
-    const pattern = generateExceptionPattern(currentException.type, currentException.details);
-    const newRule = await addLearnedRule(companyId, currentException.type, pattern, proposal.description, proposal.confidence);
+    try {
+      const dbReview = await createReview(companyId, {
+        exceptionId: currentException.id,
+        invoiceId: currentInvoice.id,
+        proposalId: proposal.id,
+        status: 'approved',
+        decision: proposal,
+        correctedBy: null,
+        notes: null,
+      });
+      review = {
+        id: dbReview.id,
+        exceptionId: dbReview.exceptionId,
+        proposalId: dbReview.proposalId,
+        status: dbReview.status,
+        decision: dbReview.decision,
+        correctedBy: dbReview.correctedBy,
+        reviewedAt: dbReview.reviewedAt,
+        notes: dbReview.notes,
+      };
+    } catch {
+      const now = new Date().toISOString();
+      review = {
+        id: `review_${Date.now()}`,
+        exceptionId: currentException.id,
+        proposalId: proposal.id,
+        status: 'approved',
+        decision: proposal,
+        correctedBy: null,
+        reviewedAt: now,
+        notes: null,
+      };
+    }
+
+    try {
+      const pattern = generateExceptionPattern(currentException.type, currentException.details);
+      newRule = await addLearnedRule(companyId, currentException.type, pattern, proposal.description, proposal.confidence);
+    } catch {
+      newRule = {
+        id: `rule_${Date.now()}`,
+        companyId,
+        exceptionType: currentException.type,
+        pattern: JSON.stringify(generateExceptionPattern(currentException.type, currentException.details)),
+        resolution: proposal.description,
+        confidence: proposal.confidence,
+        appliedCount: 1,
+        createdAt: new Date().toISOString(),
+        lastAppliedAt: new Date().toISOString(),
+      };
+    }
 
     setState((prev) => {
       const newReview: Review = {
@@ -316,15 +357,40 @@ export default function App() {
     const { currentException, currentInvoice, companyId } = stateRef.current;
     if (!currentException || !currentInvoice) return;
 
-    const review = await createReview(companyId, {
-      exceptionId: currentException.id,
-      invoiceId: currentInvoice.id,
-      proposalId: proposal.id,
-      status: 'rejected',
-      decision: null,
-      correctedBy: null,
-      notes: 'Rejected by user',
-    });
+    let review: Review;
+    try {
+      const dbReview = await createReview(companyId, {
+        exceptionId: currentException.id,
+        invoiceId: currentInvoice.id,
+        proposalId: proposal.id,
+        status: 'rejected',
+        decision: null,
+        correctedBy: null,
+        notes: 'Rejected by user',
+      });
+      review = {
+        id: dbReview.id,
+        exceptionId: dbReview.exceptionId,
+        proposalId: dbReview.proposalId,
+        status: dbReview.status,
+        decision: dbReview.decision,
+        correctedBy: dbReview.correctedBy,
+        reviewedAt: dbReview.reviewedAt,
+        notes: dbReview.notes,
+      };
+    } catch {
+      const now = new Date().toISOString();
+      review = {
+        id: `review_${Date.now()}`,
+        exceptionId: currentException.id,
+        proposalId: proposal.id,
+        status: 'rejected',
+        decision: null,
+        correctedBy: null,
+        reviewedAt: now,
+        notes: 'Rejected by user',
+      };
+    }
 
     setState((prev) => {
       const isLearnedProposal = proposal.id.startsWith('learned_');
@@ -336,20 +402,9 @@ export default function App() {
         if (typeof ruleId === 'string') updatedSkipped.add(ruleId);
       }
 
-      const rejectedReview: Review = {
-        id: review.id,
-        exceptionId: review.exceptionId,
-        proposalId: review.proposalId,
-        status: review.status,
-        decision: review.decision,
-        correctedBy: review.correctedBy,
-        reviewedAt: review.reviewedAt,
-        notes: review.notes,
-      };
-
       return {
         ...prev,
-        reviews: [...prev.reviews, rejectedReview],
+        reviews: [...prev.reviews, review],
         proposals: remainingProposals,
         skippedLearnedRuleIds: updatedSkipped,
       };
