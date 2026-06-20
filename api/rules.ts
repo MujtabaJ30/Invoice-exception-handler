@@ -15,7 +15,10 @@ const CORS_HEADERS = {
 
 export default async function handler(req: VercelRequest, res: VercelResponse): Promise<void> {
   if (req.method === 'OPTIONS') {
-    res.status(200).setHeader('Access-Control-Allow-Origin', '*').end();
+    Object.entries(CORS_HEADERS).forEach(([key, value]) => {
+      res.setHeader(key, value);
+    });
+    res.status(200).end();
     return;
   }
 
