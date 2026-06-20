@@ -47,7 +47,7 @@ interface DashboardProps {
   readonly onCustomFix: (description: string) => void;
   readonly onDismissOnboarding: () => void;
   readonly onIngestInvoices: (result: { invoices: Invoice[]; exceptions: Exception[] }) => void;
-  readonly onResetDemo: () => Promise<void>;
+  readonly onResetDemo: () => void;
 }
 
 type TabKey = 'queue' | 'impact' | 'decisions' | 'how-it-works';
@@ -125,13 +125,10 @@ export default function Dashboard({
   const [elapsedTime, setElapsedTime] = useState(0);
   const [isResetting, setIsResetting] = useState(false);
 
-  const handleReset = async () => {
+  const handleReset = () => {
     setIsResetting(true);
-    try {
-      await onResetDemo();
-    } finally {
-      setIsResetting(false);
-    }
+    onResetDemo();
+    setIsResetting(false);
   };
 
   useEffect(() => {

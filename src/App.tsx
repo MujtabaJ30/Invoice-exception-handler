@@ -102,37 +102,35 @@ function buildFallbackProposals(
 }
 
 async function loadInitialData(companyId: string) {
+  const { invoices, exceptions } = generateDemoInvoices();
+
+  // Try to load persisted data in background — not critical for demo
+  let storedReviews: DbReview[] = [];
+  let storedRules: DbRule[] = [];
   try {
-    const [{ invoices: demoInvoices, exceptions: demoExceptions }, { invoices: storedInvoices, exceptions: storedExceptions }, storedReviews, storedRules] = await Promise.all([
-      Promise.resolve(generateDemoInvoices()),
-      fetchInvoices(companyId),
+    [storedReviews, storedRules] = await Promise.all([
       fetchReviews(companyId),
       getLearnedRules(companyId),
     ]);
-
-    const allInvoices = [...storedInvoices, ...demoInvoices];
-    const allExceptions = [...storedExceptions, ...demoExceptions];
-
-    return {
-      invoices: allInvoices,
-      exceptions: allExceptions,
-      reviews: storedReviews.map((r) => ({
-        id: r.id,
-        exceptionId: r.exceptionId,
-        proposalId: r.proposalId,
-        status: r.status,
-        decision: r.decision,
-        correctedBy: r.correctedBy,
-        reviewedAt: r.reviewedAt,
-        notes: r.notes,
-      })),
-      learnedRules: storedRules,
-    };
-  } catch (error) {
-    console.error('Failed to load initial data:', error);
-    const { invoices, exceptions } = generateDemoInvoices();
-    return { invoices, exceptions, reviews: [], learnedRules: [] };
+  } catch {
+    // No DB or API down — use empty
   }
+
+  return {
+    invoices,
+    exceptions,
+    reviews: storedReviews.map((r) => ({
+      id: r.id,
+      exceptionId: r.exceptionId,
+      proposalId: r.proposalId,
+      status: r.status,
+      decision: r.decision,
+      correctedBy: r.correctedBy,
+      reviewedAt: r.reviewedAt,
+      notes: r.notes,
+    })),
+    learnedRules: storedRules,
+  };
 }
 
 export default function App() {
@@ -462,26 +460,20 @@ export default function App() {
     });
   }, []);
 
-  const handleResetDemo = useCallback(async () => {
+  const handleResetDemo = useCallback(() => {
     const { companyId } = stateRef.current;
-    setState((prev) => ({ ...prev, isProcessing: true, error: null }));
-    try {
-      await resetDatabase(companyId);
-      const { invoices: demoInvoices, exceptions: demoExceptions } = generateDemoInvoices();
-      setState({
-        ...INITIAL_STATE,
-        companyId,
-        invoices: demoInvoices,
-        exceptions: demoExceptions,
-        reviews: [],
-        learnedRules: [],
-        currentInvoice: demoInvoices[0] || null,
-        currentException: demoExceptions[0] || null,
-      });
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Reset failed';
-      setState((prev) => ({ ...prev, error: message, isProcessing: false }));
-    }
+    const { invoices: demoInvoices, exceptions: demoExceptions } = generateDemoInvoices();
+    setState({
+      ...INITIAL_STATE,
+      companyId,
+      invoices: demoInvoices,
+      exceptions: demoExceptions,
+      reviews: [],
+      learnedRules: [],
+      currentInvoice: demoInvoices[0] || null,
+      currentException: demoExceptions[0] || null,
+    });
+    resetDatabase(companyId).catch(() => {});
   }, []);
 
   if (state.invoices.length === 0) {
