@@ -42,9 +42,9 @@ interface DashboardProps {
   readonly onSelectException: (exception: Exception) => void;
   readonly onGenerateProposals: () => void;
   readonly onReapplyLearnedRule: () => void;
-  readonly onApproveFix: (proposal: FixProposal) => Promise<void>;
-  readonly onRejectFix: (proposal: FixProposal) => Promise<void>;
-  readonly onCustomFix: (description: string) => Promise<void>;
+  readonly onApproveFix: (proposal: FixProposal) => void;
+  readonly onRejectFix: (proposal: FixProposal) => void;
+  readonly onCustomFix: (description: string) => void;
   readonly onDismissOnboarding: () => void;
   readonly onIngestInvoices: (result: { invoices: Invoice[]; exceptions: Exception[] }) => void;
   readonly onResetDemo: () => Promise<void>;
@@ -91,12 +91,14 @@ export default function Dashboard({
 
   const wrappedApproveFix = (proposal: FixProposal) => {
     setActingProposalId(proposal.id);
-    onApproveFix(proposal).finally(() => setActingProposalId(null));
+    onApproveFix(proposal);
+    setActingProposalId(null);
   };
 
   const wrappedRejectFix = (proposal: FixProposal) => {
     setActingProposalId(proposal.id);
-    onRejectFix(proposal).finally(() => setActingProposalId(null));
+    onRejectFix(proposal);
+    setActingProposalId(null);
   };
 
   const invoiceExceptions = currentInvoice
@@ -504,7 +506,7 @@ function EmptyState({
   );
 }
 
-function CustomFixInput({ onSubmit }: { readonly onSubmit: (description: string) => Promise<void> }) {
+function CustomFixInput({ onSubmit }: { readonly onSubmit: (description: string) => void }) {
   const [value, setValue] = useState('');
   const [submitting, setSubmitting] = useState(false);
 

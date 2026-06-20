@@ -267,130 +267,79 @@ export default function App() {
     );
   }, []);
 
-  const handleApproveFix = useCallback(async (proposal: FixProposal) => {
+  const handleApproveFix = useCallback((proposal: FixProposal) => {
     const { currentException, currentInvoice, companyId } = stateRef.current;
     if (!currentException || !currentInvoice) return;
 
-    let review: Review;
-    let newRule: DbRule;
+    const now = new Date().toISOString();
+    const review: Review = {
+      id: `review_${Date.now()}`,
+      exceptionId: currentException.id,
+      proposalId: proposal.id,
+      status: 'approved',
+      decision: proposal,
+      correctedBy: null,
+      reviewedAt: now,
+      notes: null,
+    };
 
-    try {
-      const dbReview = await createReview(companyId, {
-        exceptionId: currentException.id,
-        invoiceId: currentInvoice.id,
-        proposalId: proposal.id,
-        status: 'approved',
-        decision: proposal,
-        correctedBy: null,
-        notes: null,
-      });
-      review = {
-        id: dbReview.id,
-        exceptionId: dbReview.exceptionId,
-        proposalId: dbReview.proposalId,
-        status: dbReview.status,
-        decision: dbReview.decision,
-        correctedBy: dbReview.correctedBy,
-        reviewedAt: dbReview.reviewedAt,
-        notes: dbReview.notes,
-      };
-    } catch {
-      const now = new Date().toISOString();
-      review = {
-        id: `review_${Date.now()}`,
-        exceptionId: currentException.id,
-        proposalId: proposal.id,
-        status: 'approved',
-        decision: proposal,
-        correctedBy: null,
-        reviewedAt: now,
-        notes: null,
-      };
-    }
-
-    try {
-      const pattern = generateExceptionPattern(currentException.type, currentException.details);
-      newRule = await addLearnedRule(companyId, currentException.type, pattern, proposal.description, proposal.confidence);
-    } catch {
-      newRule = {
-        id: `rule_${Date.now()}`,
-        companyId,
-        exceptionType: currentException.type,
-        pattern: generateExceptionPattern(currentException.type, currentException.details),
-        resolution: proposal.description,
-        confidence: proposal.confidence,
-        appliedCount: 1,
-        createdAt: new Date().toISOString(),
-        lastAppliedAt: new Date().toISOString(),
-      };
-    }
+    const pattern = generateExceptionPattern(currentException.type, currentException.details);
+    const localRule: DbRule = {
+      id: `rule_${Date.now()}`,
+      companyId,
+      exceptionType: currentException.type,
+      pattern,
+      resolution: proposal.description,
+      confidence: proposal.confidence,
+      appliedCount: 1,
+      createdAt: now,
+      lastAppliedAt: now,
+    };
 
     setState((prev) => {
-      const newReview: Review = {
-        id: review.id,
-        exceptionId: review.exceptionId,
-        proposalId: review.proposalId,
-        status: review.status,
-        decision: review.decision,
-        correctedBy: review.correctedBy,
-        reviewedAt: review.reviewedAt,
-        notes: review.notes,
-      };
-      const updatedReviews = [...prev.reviews, newReview];
+      const updatedReviews = [...prev.reviews, review];
       const nextException = moveToNextException(currentInvoice, updatedReviews);
-
       return {
         ...prev,
         reviews: updatedReviews,
         currentException: nextException,
         proposals: [],
         learnedRules: [
-          ...prev.learnedRules.filter((r) => r.id !== newRule.id),
-          newRule,
+          ...prev.learnedRules.filter((r) => r.id !== localRule.id),
+          localRule,
         ],
-        lastLearnedRule: newRule,
+        lastLearnedRule: localRule,
       };
     });
+
+    createReview(companyId, {
+      exceptionId: currentException.id,
+      invoiceId: currentInvoice.id,
+      proposalId: proposal.id,
+      status: 'approved',
+      decision: proposal,
+      correctedBy: null,
+      notes: null,
+    }).catch(() => {});
+
+    addLearnedRule(companyId, currentException.type, pattern, proposal.description, proposal.confidence).catch(() => {});
   }, [moveToNextException]);
 
-  const handleRejectFix = useCallback(async (proposal: FixProposal) => {
+  const handleRejectFix = useCallback((proposal: FixProposal) => {
     const { currentException, currentInvoice, companyId } = stateRef.current;
     if (!currentException || !currentInvoice) return;
 
-    let review: Review;
-    try {
-      const dbReview = await createReview(companyId, {
-        exceptionId: currentException.id,
-        invoiceId: currentInvoice.id,
-        proposalId: proposal.id,
-        status: 'rejected',
-        decision: null,
-        correctedBy: null,
-        notes: 'Rejected by user',
-      });
-      review = {
-        id: dbReview.id,
-        exceptionId: dbReview.exceptionId,
-        proposalId: dbReview.proposalId,
-        status: dbReview.status,
-        decision: dbReview.decision,
-        correctedBy: dbReview.correctedBy,
-        reviewedAt: dbReview.reviewedAt,
-        notes: dbReview.notes,
-      };
-    } catch {
-      const now = new Date().toISOString();
-      review = {
-        id: `review_${Date.now()}`,
-        exceptionId: currentException.id,
-        proposalId: proposal.id,
-        status: 'rejected',
-        decision: null,
-        correctedBy: null,
-        reviewedAt: now,
-        notes: 'Rejected by user',
-      };
-    }
+    const now = new Date().toISOString();
+    const review: Review = {
+      id: `review_${Date.now()}`,
+      exceptionId: currentException.id,
+      proposalId: proposal.id,
+      status: 'rejected',
+      decision: null,
+      correctedBy: null,
+      reviewedAt: now,
+      notes: 'Rejected by user',
+    };
 
     setState((prev) => {
       const isLearnedProposal = proposal.id.startsWith('learned_');
@@ -409,6 +358,16 @@ export default function App() {
         skippedLearnedRuleIds: updatedSkipped,
       };
     });
+
+    createReview(companyId, {
+      exceptionId: currentException.id,
+      invoiceId: currentInvoice.id,
+      proposalId: proposal.id,
+      status: 'rejected',
+      decision: null,
+      correctedBy: null,
+      notes: 'Rejected by user',
+    }).catch(() => {});
   }, []);
 
   const handleReapplyLearnedRule = useCallback(() => {
@@ -423,10 +382,11 @@ export default function App() {
     }));
   }, [learnedRuleForCurrent]);
 
-  const handleCustomFix = useCallback(async (description: string) => {
+  const handleCustomFix = useCallback((description: string) => {
     const { currentException, currentInvoice, companyId } = stateRef.current;
     if (!currentException || !currentInvoice) return;
 
+    const now = new Date().toISOString();
     const customProposal: FixProposal = {
       id: `custom_${Date.now()}`,
       exceptionId: currentException.id,
@@ -436,7 +396,47 @@ export default function App() {
       action: { type: 'approve', data: { custom: true } },
     };
 
-    const review = await createReview(companyId, {
+    const review: Review = {
+      id: `review_${Date.now()}`,
+      exceptionId: currentException.id,
+      proposalId: customProposal.id,
+      status: 'corrected',
+      decision: customProposal,
+      correctedBy: 'user',
+      reviewedAt: now,
+      notes: 'Custom fix',
+    };
+
+    const pattern = generateExceptionPattern(currentException.type, currentException.details);
+    const localRule: DbRule = {
+      id: `rule_${Date.now()}`,
+      companyId,
+      exceptionType: currentException.type,
+      pattern,
+      resolution: description,
+      confidence: 0.9,
+      appliedCount: 1,
+      createdAt: now,
+      lastAppliedAt: now,
+    };
+
+    setState((prev) => {
+      const updatedReviews = [...prev.reviews, review];
+      const nextException = moveToNextException(currentInvoice, updatedReviews);
+      return {
+        ...prev,
+        reviews: updatedReviews,
+        currentException: nextException,
+        proposals: [],
+        learnedRules: [
+          ...prev.learnedRules.filter((r) => r.id !== localRule.id),
+          localRule,
+        ],
+        lastLearnedRule: localRule,
+      };
+    });
+
+    createReview(companyId, {
       exceptionId: currentException.id,
       invoiceId: currentInvoice.id,
       proposalId: customProposal.id,
@@ -444,37 +444,9 @@ export default function App() {
       decision: customProposal,
       correctedBy: 'user',
       notes: 'Custom fix',
-    });
+    }).catch(() => {});
 
-    const pattern = generateExceptionPattern(currentException.type, currentException.details);
-    const newRule = await addLearnedRule(companyId, currentException.type, pattern, description, 0.9);
-
-    setState((prev) => {
-      const newReview: Review = {
-        id: review.id,
-        exceptionId: review.exceptionId,
-        proposalId: review.proposalId,
-        status: review.status,
-        decision: review.decision,
-        correctedBy: review.correctedBy,
-        reviewedAt: review.reviewedAt,
-        notes: review.notes,
-      };
-      const updatedReviews = [...prev.reviews, newReview];
-      const nextException = moveToNextException(currentInvoice, updatedReviews);
-
-      return {
-        ...prev,
-        reviews: updatedReviews,
-        currentException: nextException,
-        proposals: [],
-        learnedRules: [
-          ...prev.learnedRules.filter((r) => r.id !== newRule.id),
-          newRule,
-        ],
-        lastLearnedRule: newRule,
-      };
-    });
+    addLearnedRule(companyId, currentException.type, pattern, description, 0.9).catch(() => {});
   }, [moveToNextException]);
 
   const handleIngestInvoices = useCallback((result: { invoices: Invoice[]; exceptions: Exception[] }) => {
