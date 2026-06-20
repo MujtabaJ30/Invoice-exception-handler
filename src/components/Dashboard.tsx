@@ -99,12 +99,13 @@ export default function Dashboard({
   const proposalsEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (isProcessing || proposals.length > 0) {
-      requestAnimationFrame(() => {
+    if (proposals.length > 0) {
+      const timeoutId = setTimeout(() => {
         proposalsEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-      });
+      }, 200);
+      return () => clearTimeout(timeoutId);
     }
-  }, [isProcessing, proposals.length]);
+  }, [proposals.length]);
 
   return (
     <div className="min-h-screen bg-surface text-foreground">
@@ -229,7 +230,6 @@ export default function Dashboard({
                             onReapplyLearnedRule={onReapplyLearnedRule}
                             isProcessing={isProcessing}
                           />
-                          <div ref={proposalsEndRef} />
                         </>
                       )}
 

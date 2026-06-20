@@ -69,13 +69,16 @@ export default function ExceptionPanel({
 
         {isProcessing ? (
           <div className="space-y-3">
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <ArrowsClockwise size={16} className="animate-spin" />
-              <span>Checking patterns and past rules…</span>
-            </div>
+            <button
+              disabled
+              className="w-full inline-flex items-center justify-center gap-2 bg-primary/40 text-primary-foreground font-medium py-2.5 px-4 rounded-lg text-sm cursor-not-allowed"
+            >
+              <ArrowsClockwise size={18} className="animate-spin" />
+              Generating proposals…
+            </button>
             <div className="space-y-2">
               <div className="h-16 rounded-lg bg-surface animate-pulse" />
-              <div className="h-16 rounded-lg bg-surface animate-pulse animation-delay-150" />
+              <div className="h-16 rounded-lg bg-surface animate-pulse" />
             </div>
           </div>
         ) : isSkipped ? (
