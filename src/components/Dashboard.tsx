@@ -21,6 +21,7 @@ import Onboarding from './Onboarding';
 import HowItWorks from './HowItWorks';
 import MetricsDashboard from './MetricsDashboard';
 import InvoiceUploader from './InvoiceUploader';
+import ThemeToggle from './ThemeToggle';
 
 interface DashboardProps {
   readonly companyId: string;
@@ -130,6 +131,8 @@ export default function Dashboard({
             <StatBadge value={pendingExceptions.length} label="to review" color="warning" />
             <StatBadge value={handledCount} label="handled" color="success" />
             <StatBadge value={rulesLearnedCount} label="rules learned" color="foreground" />
+            <div className="w-px h-5 bg-border" />
+            <ThemeToggle />
           </div>
         </div>
       </header>
