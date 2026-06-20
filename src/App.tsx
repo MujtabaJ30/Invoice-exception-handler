@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, useRef, useTransition } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import type {
   Invoice,
   Exception,
@@ -140,7 +140,6 @@ export default function App() {
     ...INITIAL_STATE,
     companyId: getOrCreateCompanyId(),
   }));
-  const [, startTransition] = useTransition();
   const stateRef = useRef(state);
   stateRef.current = state;
 
@@ -213,13 +212,11 @@ export default function App() {
     try {
       if (matchingRuleForCurrent) {
         const learnedProposal = buildLearnedProposal(matchingRuleForCurrent, currentException.id);
-        startTransition(() => {
-          setState((prev) => ({
-            ...prev,
-            proposals: [learnedProposal],
-            isProcessing: false,
-          }));
-        });
+        setState((prev) => ({
+          ...prev,
+          proposals: [learnedProposal],
+          isProcessing: false,
+        }));
         return;
       }
 
@@ -231,25 +228,21 @@ export default function App() {
         learnedRules,
       });
 
-      startTransition(() => {
-        setState((prev) => ({
-          ...prev,
-          proposals: response.proposals,
-          isProcessing: false,
-        }));
-      });
+      setState((prev) => ({
+        ...prev,
+        proposals: response.proposals,
+        isProcessing: false,
+      }));
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to generate proposals';
       const fallbackProposals = buildFallbackProposals(currentException.type, currentException.id);
 
-      startTransition(() => {
-        setState((prev) => ({
-          ...prev,
-          proposals: fallbackProposals,
-          isProcessing: false,
-          error: errorMessage,
-        }));
-      });
+      setState((prev) => ({
+        ...prev,
+        proposals: fallbackProposals,
+        isProcessing: false,
+        error: errorMessage,
+      }));
     }
   }, [matchingRuleForCurrent]);
 

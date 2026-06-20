@@ -1,9 +1,10 @@
-import { Check, X, Lightning } from '@phosphor-icons/react';
+import { Check, X, Lightning, Spinner } from '@phosphor-icons/react';
 import type { FixProposal } from '../types/index.ts';
 
 interface FixProposalCardProps {
   readonly proposal: FixProposal;
   readonly isRecommended?: boolean;
+  readonly isActing?: boolean;
   readonly onUse: () => void;
   readonly onSkip: () => void;
 }
@@ -11,6 +12,7 @@ interface FixProposalCardProps {
 export default function FixProposalCard({
   proposal,
   isRecommended = false,
+  isActing = false,
   onUse,
   onSkip,
 }: FixProposalCardProps) {
@@ -70,16 +72,18 @@ export default function FixProposalCard({
         <div className="flex gap-2">
           <button
             onClick={onUse}
-            className="flex-1 inline-flex items-center justify-center gap-1.5 bg-primary hover:bg-primary/90 text-primary-foreground font-medium py-2 px-4 rounded-lg transition-colors text-sm active:scale-[0.98]"
+            disabled={isActing}
+            className="flex-1 inline-flex items-center justify-center gap-1.5 bg-primary hover:bg-primary/90 text-primary-foreground font-medium py-2 px-4 rounded-lg transition-colors text-sm active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <Check size={14} weight="bold" />
+            {isActing ? <Spinner size={14} className="animate-spin" /> : <Check size={14} weight="bold" />}
             Use this fix
           </button>
           <button
             onClick={onSkip}
-            className="flex-1 inline-flex items-center justify-center gap-1.5 bg-surface hover:bg-accent text-foreground font-medium py-2 px-4 rounded-lg transition-colors text-sm border border-border active:scale-[0.98]"
+            disabled={isActing}
+            className="flex-1 inline-flex items-center justify-center gap-1.5 bg-surface hover:bg-accent text-foreground font-medium py-2 px-4 rounded-lg transition-colors text-sm border border-border active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <X size={14} weight="bold" />
+            {isActing ? <Spinner size={14} className="animate-spin" /> : <X size={14} weight="bold" />}
             Skip
           </button>
         </div>

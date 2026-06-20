@@ -1,51 +1,32 @@
-import { useEffect, useState } from 'react';
-import { fetchMetrics } from '../lib/api.ts';
-import type { MetricsSnapshot } from '../lib/db/index.ts';
-
 interface MetricsDashboardProps {
-  readonly companyId: string;
+  readonly totalInvoices: number;
+  readonly totalExceptions: number;
+  readonly resolvedExceptions: number;
+  readonly pendingExceptions: number;
+  readonly autoResolvedCount: number;
+  readonly learnedRulesCount: number;
 }
 
-export default function MetricsDashboard({ companyId }: MetricsDashboardProps) {
-  const [metrics, setMetrics] = useState<MetricsSnapshot | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+const MANUAL_COST_PER_INVOICE = 13.5;
 
-  useEffect(() => {
-    let cancelled = false;
-    fetchMetrics(companyId)
-      .then((data) => {
-        if (!cancelled) {
-          setMetrics(data);
-          setLoading(false);
-        }
-      })
-      .catch((err) => {
-        if (!cancelled) {
-          setError(err instanceof Error ? err.message : 'Failed to load metrics');
-          setLoading(false);
-        }
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [companyId]);
+export default function MetricsDashboard({
+  totalInvoices,
+  totalExceptions,
+  resolvedExceptions,
+  pendingExceptions,
+  autoResolvedCount,
+  learnedRulesCount,
+}: MetricsDashboardProps) {
+  const touchlessRate = totalExceptions > 0 ? autoResolvedCount / totalExceptions : 0;
+  const touchlessRatePct = Math.round(touchlessRate * 100);
 
-  if (loading) {
-    return <MetricsSkeleton />;
-  }
-
-  if (error || !metrics) {
-    return (
-      <div className="bg-danger/10 border border-danger/20 rounded-xl p-8 text-center">
-        <p className="text-danger text-sm font-medium">{error || 'No metrics available'}</p>
-      </div>
-    );
-  }
-
-  const touchlessRatePct = Math.round(metrics.touchlessRate * 100);
-  const costPerInvoice = metrics.costPerInvoice;
-  const potentialSavings = Math.max(0, 13.5 - costPerInvoice);
+  const laborHoursSaved = (resolvedExceptions * 12) / 60;
+  const costSaved = laborHoursSaved * 45;
+  const costPerInvoice =
+    totalInvoices > 0
+      ? Math.max(0, MANUAL_COST_PER_INVOICE - costSaved / totalInvoices)
+      : MANUAL_COST_PER_INVOICE;
+  const potentialSavings = Math.max(0, MANUAL_COST_PER_INVOICE - costPerInvoice);
 
   return (
     <div className="space-y-6">
@@ -59,18 +40,18 @@ export default function MetricsDashboard({ companyId }: MetricsDashboardProps) {
         <MetricCard
           label="Cost per invoice"
           value={`$${costPerInvoice.toFixed(2)}`}
-          subtext={`Down from $13.50 manual baseline`}
+          subtext={`Down from $${MANUAL_COST_PER_INVOICE.toFixed(2)} manual baseline`}
           color="primary"
         />
         <MetricCard
           label="Exceptions handled"
-          value={String(metrics.resolvedExceptions)}
-          subtext={`${metrics.pendingExceptions} still pending`}
+          value={String(resolvedExceptions)}
+          subtext={`${pendingExceptions} still pending`}
           color="warning"
         />
         <MetricCard
           label="Rules learned"
-          value={String(metrics.learnedRulesCount)}
+          value={String(learnedRulesCount)}
           subtext="Patterns saved from decisions"
           color="foreground"
         />
@@ -82,13 +63,13 @@ export default function MetricsDashboard({ companyId }: MetricsDashboardProps) {
           <div>
             <p className="text-xs text-muted-foreground uppercase tracking-wide">Invoices processed</p>
             <p className="text-2xl font-bold font-mono text-foreground mt-1 tabular-nums">
-              {metrics.totalInvoices}
+              {totalInvoices}
             </p>
           </div>
           <div>
             <p className="text-xs text-muted-foreground uppercase tracking-wide">Total exceptions</p>
             <p className="text-2xl font-bold font-mono text-foreground mt-1 tabular-nums">
-              {metrics.totalExceptions}
+              {totalExceptions}
             </p>
           </div>
           <div>
@@ -108,20 +89,6 @@ export default function MetricsDashboard({ companyId }: MetricsDashboardProps) {
           make later. Every auto-resolved exception is one less interruption for the finance team.
         </p>
       </div>
-    </div>
-  );
-}
-
-function MetricsSkeleton() {
-  return (
-    <div className="space-y-6 animate-pulse">
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {Array.from({ length: 4 }).map((_, i) => (
-          <div key={i} className="bg-card rounded-xl border border-border p-5 h-28" />
-        ))}
-      </div>
-      <div className="bg-card rounded-xl border border-border p-6 h-32" />
-      <div className="bg-surface rounded-xl border border-border p-6 h-24" />
     </div>
   );
 }

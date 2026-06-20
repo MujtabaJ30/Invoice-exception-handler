@@ -40,9 +40,9 @@ interface DashboardProps {
   readonly onSelectInvoice: (invoice: Invoice) => void;
   readonly onGenerateProposals: () => void;
   readonly onReapplyLearnedRule: () => void;
-  readonly onApproveFix: (proposal: FixProposal) => void;
-  readonly onRejectFix: (proposal: FixProposal) => void;
-  readonly onCustomFix: (description: string) => void;
+  readonly onApproveFix: (proposal: FixProposal) => Promise<void>;
+  readonly onRejectFix: (proposal: FixProposal) => Promise<void>;
+  readonly onCustomFix: (description: string) => Promise<void>;
   readonly onDismissOnboarding: () => void;
   readonly onIngestInvoices: (result: { invoices: Invoice[]; exceptions: Exception[] }) => void;
 }
@@ -82,6 +82,17 @@ export default function Dashboard({
   onIngestInvoices,
 }: DashboardProps) {
   const [activeTab, setActiveTab] = useState<TabKey>('queue');
+  const [actingProposalId, setActingProposalId] = useState<string | null>(null);
+
+  const wrappedApproveFix = (proposal: FixProposal) => {
+    setActingProposalId(proposal.id);
+    onApproveFix(proposal).finally(() => setActingProposalId(null));
+  };
+
+  const wrappedRejectFix = (proposal: FixProposal) => {
+    setActingProposalId(proposal.id);
+    onRejectFix(proposal).finally(() => setActingProposalId(null));
+  };
 
   const invoiceExceptions = currentInvoice
     ? exceptions.filter((e) => e.invoiceId === currentInvoice.id)
@@ -91,6 +102,9 @@ export default function Dashboard({
   const pendingExceptions = exceptions.filter((e) => !reviewedExceptionIds.has(e.id));
   const handledCount = reviews.filter((r) => r.status !== 'rejected').length;
   const rulesLearnedCount = reviews.filter((r) => r.status === 'approved' || r.status === 'corrected').length;
+  const autoResolvedCount = reviews.filter(
+    (r) => r.status === 'approved' && r.decision?.id?.startsWith('learned_')
+  ).length;
 
   const activeStage = getActiveStage(currentInvoice, currentException, proposals, isProcessing);
   const recommendedProposal = proposals.length > 0
@@ -101,10 +115,7 @@ export default function Dashboard({
 
   useEffect(() => {
     if (proposals.length > 0) {
-      const timeoutId = setTimeout(() => {
-        proposalsEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-      }, 200);
-      return () => clearTimeout(timeoutId);
+      proposalsEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
   }, [proposals.length]);
 
@@ -233,6 +244,49 @@ export default function Dashboard({
                             onReapplyLearnedRule={onReapplyLearnedRule}
                             isProcessing={isProcessing}
                           />
+                          <div ref={proposalsEndRef}>
+                            {isProcessing && (
+                              <div className="space-y-3 mt-4 animate-fade-in">
+                                <div className="flex items-center gap-2">
+                                  <div className="w-4 h-4 rounded-full bg-surface animate-pulse" />
+                                  <div className="h-3 bg-surface rounded w-32 animate-pulse" />
+                                </div>
+                                {[1, 2, 3].map((i) => (
+                                  <div key={i} className="bg-card rounded-xl border border-border p-5 shadow-sm animate-pulse">
+                                    <div className="h-4 bg-surface rounded w-2/3 mb-3" />
+                                    <div className="h-3 bg-surface rounded w-full mb-2" />
+                                    <div className="h-3 bg-surface rounded w-5/6 mb-4" />
+                                    <div className="h-2 bg-surface rounded-full w-full mb-4" />
+                                    <div className="flex gap-2">
+                                      <div className="flex-1 h-9 bg-surface rounded-lg" />
+                                      <div className="flex-1 h-9 bg-surface rounded-lg" />
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                            {!isProcessing && proposals.length > 0 && (
+                              <div className="space-y-3 animate-slide-up mt-4">
+                                <div className="flex items-center gap-2">
+                                  <Sparkle size={16} className="text-primary" />
+                                  <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                                    Proposed fixes
+                                  </h3>
+                                </div>
+                                {proposals.map((proposal) => (
+                                  <FixProposalCard
+                                    key={proposal.id}
+                                    proposal={proposal}
+                                    isRecommended={recommendedProposal?.id === proposal.id}
+                                    isActing={actingProposalId === proposal.id}
+                                    onUse={() => wrappedApproveFix(proposal)}
+                                    onSkip={() => wrappedRejectFix(proposal)}
+                                  />
+                                ))}
+                                <CustomFixInput onSubmit={onCustomFix} />
+                              </div>
+                            )}
+                          </div>
                         </>
                       )}
 
@@ -249,27 +303,6 @@ export default function Dashboard({
                           <p className="text-danger text-sm font-medium">{error}</p>
                         </div>
                       )}
-
-                      {!isProcessing && proposals.length > 0 && (
-                        <div ref={proposalsEndRef} className="space-y-3 animate-slide-up">
-                          <div className="flex items-center gap-2">
-                            <Sparkle size={16} className="text-primary" />
-                            <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                              Proposed fixes
-                            </h3>
-                          </div>
-                          {proposals.map((proposal) => (
-                            <FixProposalCard
-                              key={proposal.id}
-                              proposal={proposal}
-                              isRecommended={recommendedProposal?.id === proposal.id}
-                              onUse={() => onApproveFix(proposal)}
-                              onSkip={() => onRejectFix(proposal)}
-                            />
-                          ))}
-                          <CustomFixInput onSubmit={onCustomFix} />
-                        </div>
-                      )}
                     </>
                   ) : (
                     <EmptyState
@@ -283,7 +316,16 @@ export default function Dashboard({
             )}
 
             {activeTab === 'decisions' && <ReviewSummary reviews={reviews} exceptions={exceptions} />}
-            {activeTab === 'impact' && <MetricsDashboard companyId={companyId} />}
+            {activeTab === 'impact' && (
+              <MetricsDashboard
+                totalInvoices={invoices.length}
+                totalExceptions={exceptions.length}
+                resolvedExceptions={handledCount}
+                pendingExceptions={exceptions.length - handledCount}
+                autoResolvedCount={autoResolvedCount}
+                learnedRulesCount={rulesLearnedCount}
+              />
+            )}
             {activeTab === 'how-it-works' && <HowItWorks />}
           </motion.div>
         </AnimatePresence>
@@ -427,14 +469,20 @@ function EmptyState({
   );
 }
 
-function CustomFixInput({ onSubmit }: { readonly onSubmit: (description: string) => void }) {
+function CustomFixInput({ onSubmit }: { readonly onSubmit: (description: string) => Promise<void> }) {
   const [value, setValue] = useState('');
+  const [submitting, setSubmitting] = useState(false);
 
-  const handleSubmit = (e: FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    if (value.trim()) {
-      onSubmit(value.trim());
-      setValue('');
+    if (value.trim() && !submitting) {
+      setSubmitting(true);
+      try {
+        await onSubmit(value.trim());
+        setValue('');
+      } finally {
+        setSubmitting(false);
+      }
     }
   };
 
@@ -449,15 +497,23 @@ function CustomFixInput({ onSubmit }: { readonly onSubmit: (description: string)
           type="text"
           value={value}
           onChange={(e) => setValue(e.target.value)}
+          disabled={submitting}
           placeholder="Describe a different fix…"
-          className="flex-1 bg-surface border border-border rounded-lg px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors"
+          className="flex-1 bg-surface border border-border rounded-lg px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors disabled:opacity-50"
         />
         <button
           type="submit"
-          disabled={!value.trim()}
-          className="bg-secondary text-secondary-foreground px-5 py-2.5 rounded-lg text-sm font-medium hover:bg-accent transition-colors disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98]"
+          disabled={!value.trim() || submitting}
+          className="bg-secondary text-secondary-foreground px-5 py-2.5 rounded-lg text-sm font-medium hover:bg-accent transition-colors disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98] min-w-[140px] inline-flex items-center justify-center gap-1.5"
         >
-          Apply custom fix
+          {submitting ? (
+            <>
+              <span className="w-4 h-4 border-2 border-border border-t-current rounded-full animate-spin" />
+              Applying…
+            </>
+          ) : (
+            'Apply custom fix'
+          )}
         </button>
       </div>
     </form>
