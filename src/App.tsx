@@ -316,7 +316,7 @@ export default function App() {
         id: `rule_${Date.now()}`,
         companyId,
         exceptionType: currentException.type,
-        pattern: JSON.stringify(generateExceptionPattern(currentException.type, currentException.details)),
+        pattern: generateExceptionPattern(currentException.type, currentException.details),
         resolution: proposal.description,
         confidence: proposal.confidence,
         appliedCount: 1,
