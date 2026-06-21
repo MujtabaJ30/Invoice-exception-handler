@@ -1,5 +1,8 @@
 # Exception Engine
 
+### **Live demo:** [https://exception-engine.vercel.app](https://invoice-exception-handler.vercel.app/)
+
+
 An AI employee for invoice exception handling. Built for the Zamp AI PM assignment.
 
 Exceptions eat 40% of AP team time. Most invoices match their PO and post automatically. The 20% that don't are where teams get stuck: chasing vendors, recalculating taxes, hunting down missing documents. This engine handles that gap, end-to-end.
@@ -16,7 +19,6 @@ Exceptions eat 40% of AP team time. Most invoices match their PO and post automa
 
 Zamp ships AI employees that own jobs end-to-end. This engine demonstrates the exact pattern for AP exception handling: deterministic detection catches the issue, the AI employee proposes a resolution, a human stays in the loop for judgment, and every correction makes the system better. The goal is Zamp's own benchmark: 85%+ touchless processing, cost per invoice below $3.
 
-**Live demo:** https://exception-engine.vercel.app
 
 ## Architecture
 
