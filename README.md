@@ -1,4 +1,4 @@
-# AI Invoice Exception Handler (Zamp)
+# AI Invoice Exception Handler
 
 An MVP for AP teams that resolves invoice exceptions with a rules-first, human-in-the-loop AI workflow.
 
@@ -65,31 +65,31 @@ A rules-first exception engine that keeps financial judgment with the human revi
 
 The main workspace keeps exception review focused: invoice queue on the left, current document and exception details in the center, and next-step actions close at hand.
 
-![Exception Queue home page](</E:/Projects/zamp/exception-engine/docs/assets/exception-queue-home.png>)
+![Exception Queue home page](docs/assets/exception-queue-home.png)
 
 ### Proposal generation
 
 Once an exception is selected, the product generates candidate fixes while keeping the human reviewer in control of the final decision.
 
-![Generating fix proposal](</E:/Projects/zamp/exception-engine/docs/assets/generating-fix-proposal.png>)
+![Generating fix proposal](docs/assets/generating-fix-proposal.png)
 
 ### Guided walkthrough
 
 The product includes a built-in demo path so reviewers and recruiters can understand the learning loop quickly without needing outside setup.
 
-![Demo instructions](</E:/Projects/zamp/exception-engine/docs/assets/demo-instructions.png>)
+![Demo instructions](docs/assets/demo-instructions.png)
 
 ### Decisions and audit trail
 
 Every action is logged so the workflow stays reviewable instead of becoming a black-box automation layer.
 
-![Decisions log](</E:/Projects/zamp/exception-engine/docs/assets/decisions-log.png>)
+![Decisions log](docs/assets/decisions-log.png)
 
 ### Impact view
 
 The dashboard ties product behavior back to operational outcomes like handled work, touchless processing, and rules learned.
 
-![Impact Dashboard](</E:/Projects/zamp/exception-engine/docs/assets/impact-dashboard.png>)
+![Impact Dashboard](docs/assets/impact-dashboard.png)
 
 ## Demo flow
 
@@ -163,4 +163,4 @@ This repo is presented as an MVP case study rather than a finished enterprise pr
 
 ## License
 
-MIT. See [LICENSE](</E:/Projects/zamp/exception-engine/LICENSE>).
+MIT. See [LICENSE](LICENSE).
