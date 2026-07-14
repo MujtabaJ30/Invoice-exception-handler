@@ -1,100 +1,166 @@
-# Exception Engine
+# AI Invoice Exception Handler (Zamp)
 
-### **Live demo:** [https://exception-engine.vercel.app](https://invoice-exception-handler.vercel.app/)
+An MVP for AP teams that resolves invoice exceptions with a rules-first, human-in-the-loop AI workflow.
 
+This project started as a PM assignment and was then polished into a portfolio-ready case study. The core idea is simple: most invoices post automatically, but the exceptions are where finance teams lose time. This product detects those exceptions deterministically, proposes fixes with an LLM, captures human decisions, and learns approved resolutions for next time.
 
-An AI employee for invoice exception handling. Built for the Zamp AI PM assignment.
+## Links
 
-Exceptions eat 40% of AP team time. Most invoices match their PO and post automatically. The 20% that don't are where teams get stuck: chasing vendors, recalculating taxes, hunting down missing documents. This engine handles that gap, end-to-end.
+- Live app: [invoice-exception-handler.vercel.app](https://invoice-exception-handler.vercel.app/)
+- GitHub repo: [MujtabaJ30/Invoice-exception-handler](https://github.com/MujtabaJ30/Invoice-exception-handler)
+- Loom walkthrough: [2-minute demo](https://www.loom.com/share/530ac0066d3c487d87490231ffa5d1c2)
 
-**What it does:**
+## What this product does
 
-- Detects 7 types of invoice exceptions with deterministic rules (no false positives)
-- Uses an LLM to draft fix proposals with confidence scores
-- Lets a person approve, skip, or write a custom fix
-- Learns from every approval. Same exception pattern next time? Resolved automatically.
-- Shows real-time ROI metrics: touchless rate, cost per invoice, rules learned
+- Detects 7 invoice exception types with deterministic rules
+- Generates structured fix proposals with confidence scores
+- Keeps a human in the loop for approval, rejection, or custom correction
+- Learns approved fixes and reapplies them when the same pattern returns
+- Tracks outcome metrics like touchless resolution, handled exceptions, and rules learned
 
-**Why it fits Zamp:**
+## Why this is interesting
 
-Zamp ships AI employees that own jobs end-to-end. This engine demonstrates the exact pattern for AP exception handling: deterministic detection catches the issue, the AI employee proposes a resolution, a human stays in the loop for judgment, and every correction makes the system better. The goal is Zamp's own benchmark: 85%+ touchless processing, cost per invoice below $3.
+Most AP tools stop at flagging a problem. This MVP focuses on the full loop:
 
+1. Detect the issue
+2. Propose a fix
+3. Capture the human decision
+4. Learn from that decision
+
+That learning loop is the product. Each approved resolution makes the next similar exception cheaper and faster to handle.
+
+## Product framing
+
+### User
+
+Accounts payable teams reviewing exceptions such as missing POs, duplicate invoices, tax mismatches, unknown vendors, or incorrect totals.
+
+### Problem
+
+Manual exception handling is repetitive, slow, and expensive. Teams often resolve the same issues again and again with no compounding benefit.
+
+### MVP solution
+
+A rules-first exception engine that keeps financial judgment with the human reviewer while using AI to reduce repetitive work.
+
+### Scope of this MVP
+
+- JSON invoice ingestion
+- Deterministic exception detection
+- LLM-generated proposals with fallback behavior
+- Review logging
+- Learned-rule persistence
+- Impact dashboard
+
+### Not in scope yet
+
+- PDF and OCR ingestion
+- ERP integrations like NetSuite, SAP, or Oracle
+- Approval routing and SLA automation
+- Multi-tenant enterprise controls
+
+## Screenshots
+
+### Queue and triage
+
+The main workspace keeps exception review focused: invoice queue on the left, current document and exception details in the center, and next-step actions close at hand.
+
+![Exception Queue home page](</E:/Projects/zamp/exception-engine/docs/assets/exception-queue-home.png>)
+
+### Proposal generation
+
+Once an exception is selected, the product generates candidate fixes while keeping the human reviewer in control of the final decision.
+
+![Generating fix proposal](</E:/Projects/zamp/exception-engine/docs/assets/generating-fix-proposal.png>)
+
+### Guided walkthrough
+
+The product includes a built-in demo path so reviewers and recruiters can understand the learning loop quickly without needing outside setup.
+
+![Demo instructions](</E:/Projects/zamp/exception-engine/docs/assets/demo-instructions.png>)
+
+### Decisions and audit trail
+
+Every action is logged so the workflow stays reviewable instead of becoming a black-box automation layer.
+
+![Decisions log](</E:/Projects/zamp/exception-engine/docs/assets/decisions-log.png>)
+
+### Impact view
+
+The dashboard ties product behavior back to operational outcomes like handled work, touchless processing, and rules learned.
+
+![Impact Dashboard](</E:/Projects/zamp/exception-engine/docs/assets/impact-dashboard.png>)
+
+## Demo flow
+
+1. Open the Queue tab and pick an invoice with an exception.
+2. Generate fix proposals.
+3. Approve one proposal or enter a custom correction.
+4. Reset the demo and reopen the same exception.
+5. Show that the learned fix is now available instantly.
 
 ## Architecture
 
+```text
+Invoice data -> deterministic detection engine -> exception identified
+             -> LLM proposal generation -> human decision
+             -> review log + learned rule persistence
+             -> same pattern returns -> learned fix suggested/applied
 ```
-User clicks "Get fix proposals"
-        │
-        ▼
-┌──────────────────┐      ┌─────────────────┐
-│  Deterministic   │      │  LLM (DeepSeek)  │
-│  rule engine     │ ───► │  generates       │
-│  detects issue   │      │  fix proposals   │
-└──────────────────┘      └─────────────────┘
-        │                         │
-        ▼                         ▼
-┌──────────────────┐      ┌─────────────────┐
-│  User approves,  │      │  Pattern saved   │
-│  skips, or writes│ ───► │  to Postgres.    │
-│  custom fix      │      │  Applied next     │
-└──────────────────┘      │  time.           │
-                          └─────────────────┘
-```
-
-- **Detection:** Deterministic rules. No AI guessing on what's wrong.
-- **Proposals:** LLM generates fixes. AI never approves money on its own.
-- **Learning:** Exact field-level pattern matching. Not fuzzy string search.
-- **Persistence:** Postgres (or local JSON in dev). Rules survive restarts.
 
 ## Tech stack
 
 | Layer | Choice |
-|-------|--------|
+|---|---|
 | Frontend | React 19, TypeScript, Vite |
-| Styling | Tailwind CSS v4, OKLCH color space |
-| LLM | OpenCode Go API (DeepSeek v4 Flash) |
+| Styling | Tailwind CSS v4 |
 | Backend | Vercel serverless functions |
-| Database | Postgres (`@vercel/postgres`), local JSON fallback |
-| Animation | Framer Motion |
-| Validation | Zod (structured LLM output) |
+| Database | Neon/Postgres with local JSON fallback |
+| LLM output validation | Zod |
+| Motion | Framer Motion |
 | Testing | Vitest |
 
-## Running locally
+## Credibility choices
+
+- Deterministic rules decide what is wrong
+- AI proposes fixes instead of approving money autonomously
+- Learned rules persist instead of resetting on refresh
+- LLM output is validated and has fallback proposals when generation fails
+- Business metrics are visible in the product, not just described in slides
+
+## Local development
 
 ```bash
 npm install
-# Create .env with OPENCODE_GO_API_KEY
-npm run dev        # localhost:5173
-npm test           # 10 tests
-npm run build      # production build
+npm run dev
+npm test
+npm run build
 ```
 
-## Project structure
+Create a local `.env` file if you want live LLM responses:
 
-```
-├── api/               Vercel serverless functions
-│   ├── generate.ts    LLM fix proposals
-│   ├── rules.ts       Learned rules CRUD
-│   ├── reviews.ts     Decision logging
-│   ├── invoices.ts    Invoice ingestion
-│   ├── metrics.ts     ROI calculations
-│   └── reset.ts       Demo reset
-├── src/
-│   ├── components/    Dashboard, ExceptionPanel, FixProposalCard,
-│   │                  MetricsDashboard, InvoiceList, HowItWorks
-│   ├── lib/
-│   │   ├── exceptions.ts   Detection engine (7 rules)
-│   │   ├── db/             Postgres + local JSON abstraction
-│   │   ├── api.ts          Frontend API client with retry
-│   │   ├── learning.ts     Rule matching and application
-│   │   └── invoices.ts     Deterministic demo data
-│   └── types/              TypeScript interfaces
-└── docs/              Pitch, plan, decisions
+```bash
+OPENCODE_GO_API_KEY=your_key_here
+DATABASE_URL=your_database_url_here
 ```
 
-## What's next
+The app still works in a demo-friendly mode without those values by using fallback behavior where possible.
 
-- PDF/OCR ingestion with LLM extraction
-- ERP connectors (Netsuite, SAP, Oracle)
-- Approval routing by amount tier with SLA tracking
-- Multi-tenant enterprise support
+## Repo structure
+
+```text
+api/                  Serverless endpoints
+src/components/       Dashboard and interaction UI
+src/lib/exceptions.ts Deterministic exception detection
+src/lib/learning.ts   Learned rule creation and application
+src/lib/db/           Postgres and local fallback data layer
+docs/                 Pitch, demo script, context, and portfolio assets
+```
+
+## Portfolio notes
+
+This repo is presented as an MVP case study rather than a finished enterprise product. The goal is to show product thinking, implementation depth, and a credible AI workflow with clear safety boundaries.
+
+## License
+
+MIT. See [LICENSE](</E:/Projects/zamp/exception-engine/LICENSE>).
